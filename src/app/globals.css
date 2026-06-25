@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Argus — authored "signal instrument" system.
+   Brand is a bespoke electric cyan-teal ramp built in oklch (deliberately NOT
+   Tailwind blue). Amber is the warm counter-accent (deadlines/urgency) for
+   cool-brand/warm-CTA tension. Blur is rationed to a single layer (the app bar).
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Brand — electric cyan-teal, authored in oklch */
+  --color-signal-50: oklch(0.972 0.02 195);
+  --color-signal-100: oklch(0.93 0.05 194);
+  --color-signal-200: oklch(0.89 0.08 193);
+  --color-signal-300: oklch(0.84 0.108 193);
+  --color-signal-400: oklch(0.785 0.138 192);
+  --color-signal-500: oklch(0.715 0.146 192);
+  --color-signal-600: oklch(0.585 0.122 193);
+  --color-signal-700: oklch(0.5 0.1 194);
+
+  /* Semantic — info is distinct from the brand; amber is the warm counter-accent */
+  --color-success: oklch(0.66 0.16 150);
+  --color-warn: oklch(0.77 0.155 68);
+  --color-amber: oklch(0.79 0.162 74);
+  --color-danger: oklch(0.62 0.21 18);
+  --color-info: oklch(0.62 0.15 252);
+
+  /* Category accents — one oklch family (paired with icon + label, never colour alone) */
+  --color-cat-internship: oklch(0.62 0.15 252);
+  --color-cat-scholarship: oklch(0.585 0.18 300);
+  --color-cat-competition: oklch(0.74 0.16 62);
+  --color-cat-hackathon: oklch(0.7 0.135 192);
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+  --font-display: var(--font-bricolage), var(--font-geist), sans-serif;
+  --font-deva: var(--font-noto), var(--font-geist), sans-serif;
+
+  /* One radius scale, applied consistently */
+  --radius-control: 9px;
+  --radius-card: 15px;
+  --radius-shell: 20px;
+
+  --animate-sweep: sweep 4.2s linear infinite;
+  --animate-ping-ring: ping-ring 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pulse-soft: pulse-soft 2.8s ease-in-out infinite;
+}
+
+@theme inline {
+  --color-base: var(--c-base);
+  --color-surface: var(--c-surface);
+  --color-elevated: var(--c-elevated);
+  --color-overlay: var(--c-overlay);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+  --color-signal: var(--c-signal);
+}
+
+/* White-only by design. Neutrals carry a faint cool cast to sit with the brand. */
+:root {
+  --c-base: #f3f6f6;
+  --c-surface: #ffffff;
+  --c-elevated: #ffffff;
+  --c-overlay: #ffffff;
+  --c-line: #e4e9e9;
+  --c-line-strong: #d0d7d7;
+  --c-ink: #101719;
+  --c-ink-2: #4f585a;
+  --c-ink-3: #818b8c;
+  --c-signal: oklch(0.555 0.118 193);
+  --shadow-card: 0 1px 2px rgba(8, 22, 24, 0.05), 0 1px 3px rgba(8, 22, 24, 0.06);
+  --shadow-pop: 0 12px 30px -12px rgba(8, 30, 33, 0.2);
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-base);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Hierarchy carried by a real display face + weight, not just a gray ramp. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  h1 {
+    font-weight: 700;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-signal-500) 26%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-signal-500);
+    outline-offset: 2px;
+    border-radius: 5px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-3);
+    background-clip: content-box;
+  }
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  /* Hover with a POV: the card lifts AND a brand hairline ignites at the top edge. */
+  .panel-hover {
+    position: relative;
+    transition: border-color 0.18s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+  }
+  .panel-hover::after {
+    content: "";
+    position: absolute;
+    inset-inline: 14%;
+    top: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-signal-500), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .panel-hover:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--color-signal-500) 40%, var(--color-line-strong));
+    box-shadow: var(--shadow-pop);
+  }
+  .panel-hover:hover::after {
+    opacity: 1;
+  }
+
+  /* The single intentional blur layer (top app bar only). */
+  .glass {
+    background: color-mix(in oklab, var(--color-base) 82%, transparent);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+  }
+
+  .aim-grid {
+    background-image:
+      radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--color-signal-500) 8%, transparent) 0%, transparent 62%),
+      repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 56px, color-mix(in oklab, var(--color-ink-3) 7%, transparent) 57px, transparent 58px);
+  }
+
+  .text-gradient-signal {
+    background: linear-gradient(100deg, var(--color-signal-700), var(--color-signal-400));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hairline {
+    background: linear-gradient(90deg, transparent, var(--color-line-strong), transparent);
+  }
+}
+
+@keyframes sweep { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes ping-ring { 0% { transform: scale(0.35); opacity: 0.7; } 80%, 100% { transform: scale(2.3); opacity: 0; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    color-mix(in oklab, var(--color-ink-3) 10%, var(--color-surface)) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
