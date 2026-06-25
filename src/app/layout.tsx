@@ -54,17 +54,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="light"
       suppressHydrationWarning
       className={`${geist.variable} ${geistMono.variable} ${bricolage.variable} ${notoDeva.variable} h-full antialiased`}
     >
-      <head>
-        {/* Locked to the light theme. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.setAttribute('data-theme','light');`,
-          }}
-        />
-      </head>
       <body className="min-h-full bg-base text-ink font-sans">
         {children}
         <Toaster />

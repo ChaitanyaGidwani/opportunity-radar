@@ -148,6 +148,9 @@ export interface Profile {
   location?: string;
   willingToRelocate?: boolean;
   remoteOnly?: boolean;
+  degree?: string;
+  college?: string;
+  email?: string;
   createdAt?: string;
   onboarded?: boolean;
 }
