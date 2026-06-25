@@ -25,6 +25,7 @@ import { useCollections } from "@/store/collections";
 import { useNudges } from "@/store/nudges";
 import { usePrefs } from "@/store/prefs";
 import { useToastStore } from "@/store/toast";
+import { auth } from "@/lib/firebase";
 import { enablePush, pushPermission, sendTestPush } from "@/lib/push-client";
 import { cn } from "@/lib/utils";
 
@@ -87,15 +88,53 @@ export function NotificationsClient() {
     setPushBusy(false);
   };
 
-  const onTestPush = async () => {
+  const onTestNudge = async () => {
     setPushBusy(true);
+    let successCount = 0;
     const sample = unreadDue[0] ?? due[0] ?? upcoming[0];
-    const ok = await sendTestPush({
-      title: sample ? `⏰ ${windowLabel(sample.window)} — ${sample.title}` : "⏰ Argus",
-      body: sample?.message ?? "This is how a deadline nudge will reach you.",
-      url: "/notifications",
-    });
-    pushToast(ok ? "Test nudge sent to your device." : "No subscribed device — enable push first.", ok ? "success" : "error");
+
+    // 1. Test Browser Push
+    if (prefs.channels.push && pushState === "granted") {
+      const ok = await sendTestPush({
+        title: sample ? `⏰ ${windowLabel(sample.window)} — ${sample.title}` : "⏰ Opportunity Radar",
+        body: sample?.message ?? "This is how a deadline nudge will reach you.",
+        url: "/notifications",
+      });
+      if (ok) successCount++;
+    }
+
+    // 2. Test Email Digest
+    if (prefs.channels.email) {
+      const userEmail = auth.currentUser?.email;
+      if (userEmail) {
+        try {
+          const res = await fetch("/api/test-nudge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          if (res.ok) {
+            successCount++;
+          } else {
+            const err = await res.json();
+            pushToast(`Email failed: ${err.error}`, "error");
+          }
+        } catch (e: any) {
+          pushToast(`Email error: ${e.message}`, "error");
+        }
+      } else {
+        pushToast("No email found to send to.", "error");
+      }
+    }
+
+    if (successCount > 0) {
+      pushToast("Test nudge(s) sent successfully!", "success");
+    } else if (!prefs.channels.push && !prefs.channels.email) {
+      pushToast("Enable Browser Push or Email Digest first.", "error");
+    } else if (prefs.channels.push && pushState !== "granted") {
+       pushToast("Browser push is enabled but permission not granted.", "error");
+    }
+    
     setPushBusy(false);
   };
 
@@ -150,7 +189,7 @@ export function NotificationsClient() {
                 <Bell size={14} /> Enable browser nudges
               </Button>
             )}
-            <Button size="sm" variant="secondary" onClick={onTestPush} disabled={pushBusy}>
+            <Button size="sm" variant="secondary" onClick={onTestNudge} disabled={pushBusy}>
               <Send size={14} /> Send me a test nudge
             </Button>
           </div>

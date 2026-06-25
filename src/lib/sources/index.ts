@@ -3,6 +3,7 @@ import { devpostAdapter } from "./devpost";
 import { devfolioAdapter } from "./devfolio";
 import { unstopAdapter } from "./unstop";
 import { mlhAdapter } from "./mlh";
+import { ethglobalAdapter } from "./ethglobal";
 import { codeforcesAdapter } from "./codeforces";
 import { codechefAdapter } from "./codechef";
 import { greenhouseAdapter } from "./greenhouse";
@@ -25,6 +26,7 @@ export const ADAPTERS: SourceAdapter[] = [
   devpostAdapter,
   devfolioAdapter,
   unstopAdapter,
+  ethglobalAdapter,
   mlhAdapter,
   codeforcesAdapter,
   codechefAdapter,
