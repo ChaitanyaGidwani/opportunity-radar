@@ -1,0 +1,234 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, RotateCcw, Search, MapPin, GraduationCap, LayoutGrid, Star, SlidersHorizontal } from "lucide-react";
+import type { Category, Gender, SocialCategory } from "@/lib/types";
+import { BRANCHES, YEARS, SOCIAL_CATEGORIES, INDIAN_STATES, STATE_LABELS, INTEREST_OPTIONS, SKILLS } from "@/lib/taxonomy";
+import { CATEGORY_ICON, CATEGORY_COLOR } from "../feed/category-icon";
+import { Button } from "../ui/button";
+import { Chip, Toggle } from "../ui/primitives";
+import { useProfile } from "@/store/profile";
+import { cn } from "@/lib/utils";
+
+function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="panel p-4 sm:p-5">
+      <p className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-ink">
+        <span className="text-signal-500">{icon}</span>
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+export function ProfileClient() {
+  const router = useRouter();
+  const profile = useProfile((s) => s.profile);
+  const setProfile = useProfile((s) => s.setProfile);
+  const [skillQuery, setSkillQuery] = useState("");
+
+  const toggleInterest = (c: Category) =>
+    setProfile({ interests: profile.interests.includes(c) ? profile.interests.filter((x) => x !== c) : [...profile.interests, c] });
+  const toggleSkill = (slug: string) =>
+    setProfile({ skills: profile.skills.includes(slug) ? profile.skills.filter((x) => x !== slug) : [...profile.skills, slug] });
+
+  const skillGroups = useMemo(() => {
+    const filtered = SKILLS.filter((s) => (skillQuery ? s.label.toLowerCase().includes(skillQuery.toLowerCase()) : true));
+    const map = new Map<string, typeof SKILLS>();
+    for (const s of filtered) {
+      if (!map.has(s.group)) map.set(s.group, []);
+      map.get(s.group)!.push(s);
+    }
+    return [...map.entries()];
+  }, [skillQuery]);
+
+  return (
+    <div className="px-4 py-5 sm:px-6 sm:py-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Your profile</h1>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-2">
+            <Check size={14} className="text-success" /> Changes save instantly and re-tune your feed.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/onboarding")}>
+          <RotateCcw size={14} /> Re-run setup
+        </Button>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        {/* Identity */}
+        <Section title="Identity" icon={<GraduationCap size={15} />}>
+          <div className="space-y-4">
+            <Field label="Name">
+              <input
+                value={profile.name ?? ""}
+                onChange={(e) => setProfile({ name: e.target.value })}
+                placeholder="Your name"
+                className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-ink-3"
+              />
+            </Field>
+            <Field label="Branch / stream">
+              <div className="flex flex-wrap gap-1.5">
+                {BRANCHES.map((b) => (
+                  <Chip key={b.slug} active={profile.branch === b.slug} onClick={() => setProfile({ branch: b.slug })}>
+                    {b.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+            <Field label="Year">
+              <div className="flex flex-wrap gap-1.5">
+                {YEARS.map((y) => (
+                  <Chip key={y.value} active={profile.year === y.value} onClick={() => setProfile({ year: y.value })}>
+                    {y.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+          </div>
+        </Section>
+
+        {/* Eligibility */}
+        <Section title="Eligibility details" icon={<SlidersHorizontal size={15} />}>
+          <div className="space-y-4">
+            <Field label="CGPA (optional)">
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                value={profile.cgpa ?? ""}
+                onChange={(e) => setProfile({ cgpa: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="e.g. 8.2"
+                className="h-10 w-28 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-ink-3"
+              />
+            </Field>
+            <Field label="Category (for scholarships)">
+              <div className="flex flex-wrap gap-1.5">
+                {SOCIAL_CATEGORIES.map((c) => (
+                  <Chip
+                    key={c.value}
+                    active={profile.socialCategory === c.value}
+                    onClick={() => setProfile({ socialCategory: profile.socialCategory === c.value ? undefined : (c.value as SocialCategory) })}
+                  >
+                    {c.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+            <Field label="Gender (for gender-specific awards)">
+              <div className="flex flex-wrap gap-1.5">
+                {(["female", "male", "other", "prefer-not"] as Gender[]).map((g) => (
+                  <Chip key={g} active={profile.gender === g} onClick={() => setProfile({ gender: profile.gender === g ? undefined : g })}>
+                    {g === "prefer-not" ? "Prefer not to say" : g[0].toUpperCase() + g.slice(1)}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+            <Field label="Home state">
+              <select
+                value={profile.state ?? ""}
+                onChange={(e) => setProfile({ state: e.target.value || undefined })}
+                className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-ink-3"
+              >
+                <option value="">Select state…</option>
+                {INDIAN_STATES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATE_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </Section>
+
+        {/* Location prefs */}
+        <Section title="Location preferences" icon={<MapPin size={15} />}>
+          <div className="space-y-4">
+            <Field label="Home city">
+              <input
+                value={profile.location ?? ""}
+                onChange={(e) => setProfile({ location: e.target.value })}
+                placeholder="e.g. Pune"
+                className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-ink-3"
+              />
+            </Field>
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] text-ink-2">Open to relocating</span>
+              <Toggle checked={!!profile.willingToRelocate} onChange={(v) => setProfile({ willingToRelocate: v })} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] text-ink-2">Remote-only (hide on-site roles)</span>
+              <Toggle checked={!!profile.remoteOnly} onChange={(v) => setProfile({ remoteOnly: v })} />
+            </div>
+          </div>
+        </Section>
+
+        {/* Interests */}
+        <Section title="Feed categories" icon={<LayoutGrid size={15} />}>
+          <div className="grid grid-cols-2 gap-2">
+            {INTEREST_OPTIONS.map((opt) => {
+              const Icon = CATEGORY_ICON[opt.value];
+              const active = profile.interests.includes(opt.value);
+              const color = CATEGORY_COLOR[opt.value];
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => toggleInterest(opt.value)}
+                  className={cn("flex items-center gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors", active ? "border-transparent text-ink" : "border-line text-ink-2 hover:border-ink-3")}
+                  style={active ? { background: `color-mix(in oklab, ${color} 12%, transparent)`, boxShadow: `inset 0 0 0 1px ${color}66` } : undefined}
+                >
+                  <Icon size={16} style={{ color: active ? color : undefined }} />
+                  {opt.label}
+                  {active && <Check size={14} className="ml-auto text-signal-500" />}
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+      </div>
+
+      {/* Skills full width */}
+      <div className="mt-4">
+        <Section title={`Skills & interests${profile.skills.length ? ` · ${profile.skills.length} selected` : ""}`} icon={<Star size={15} />}>
+          <div className="relative mb-3">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+            <input
+              value={skillQuery}
+              onChange={(e) => setSkillQuery(e.target.value)}
+              placeholder="Search skills…"
+              className="h-10 w-full rounded-full border border-line bg-surface pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-ink-3"
+            />
+          </div>
+          <div className="max-h-[40vh] space-y-4 overflow-y-auto pr-1">
+            {skillGroups.map(([group, items]) => (
+              <div key={group}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">{group}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {items.map((s) => (
+                    <Chip key={s.slug} active={profile.skills.includes(s.slug)} onClick={() => toggleSkill(s.slug)}>
+                      {profile.skills.includes(s.slug) && <Check size={12} />}
+                      {s.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-[12px] font-medium text-ink-3">{label}</label>
+      {children}
+    </div>
+  );
+}
