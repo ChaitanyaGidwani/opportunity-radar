@@ -11,23 +11,40 @@ Most students juggle a dozen siloed platforms and still miss things — and the 
 | Pillar | How |
 | --- | --- |
 | **Cross-category feed** | Internships · scholarships · competitions · hackathons, normalised into one `Opportunity` schema. No incumbent does this — each is siloed to one vertical. |
-| **Live aggregation** | 9 sources fetched server-side, cached, deduped. Verified live: **213 opportunities** across all categories on first scan. |
+| **Live aggregation** | 10 sources fetched server-side, cached, deduped. Verified live: **213+ opportunities** across all categories on first scan. |
 | **Eligibility-aware filtering** | Branch, year, CGPA, state, category, gender → opportunities you *can't* apply to are hidden. Missing fields default to *eligible* so noisy data never wrongly hides a match. |
 | **Transparent ranking** | A deterministic weighted score (no ML training, no pay-to-rank) with a free **"why this matched you"** explanation on every card. |
-| **Deadline nudges** | Reminders at **T-7d / T-3d / T-1d / T-3h** via in-app center, **real browser push (web-push/VAPID)**, email (Resend-ready) and one-tap **Add-to-Calendar (.ics + Google)**. |
+| **Deadline nudges** | Reminders at **T-7d / T-3d / T-1d / T-3h** via in-app center, **real browser push (web-push/VAPID)**, **email (via Resend)** and one-tap **Add-to-Calendar (.ics + Google)**. |
 | **Distinctive design** | A clean, light "signal" system — an authored cyan-teal palette, a real display typeface, category tiles, deadline-warmed countdowns, per-card match glyphs and a floating tab bar. WCAG-minded, mobile-first. |
+| **Persistent User Profiles**| Seamlessly syncs your skills, preferences, and saved opportunities across devices using **Firebase Firestore**. |
 
 ---
 
 ## Quick start
 
+To run Argus locally, you will need a `.env.local` file with your API keys.
+
+1. Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY="your_firebase_api_key"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your_firebase_auth_domain"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="your_firebase_project_id"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your_firebase_storage_bucket"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your_messaging_sender_id"
+NEXT_PUBLIC_FIREBASE_APP_ID="your_app_id"
+
+# For email notification testing
+RESEND_API_KEY="your_resend_api_key"
+```
+
+2. Install dependencies and start the server:
 ```bash
 npm install
 npm run dev
 # open http://localhost:3000
 ```
 
-No API keys, no database, no cloud account required — the app aggregates from zero-auth public APIs and persists a cache + a generated VAPID keypair to `.cache/`. On first load the feed performs a live scan (with skeleton loaders); subsequent loads are instant.
+On first load, the feed performs a live scan across all 10 sources (with skeleton loaders); subsequent loads are extremely fast due to local `.cache/` data.
 
 ---
 
@@ -39,6 +56,7 @@ All fetched **server-side** (no per-request scraping in the browser), cached for
 | --- | --- | --- | --- |
 | **Devpost** | green | Hackathons | Public JSON `devpost.com/api/hackathons` |
 | **Devfolio** | green | Hackathons | Public JSON `api.devfolio.co` (India-heavy) |
+| **ETHGlobal** | green | Hackathons | HTML Scraper (via `cheerio`) extracting events directly from `ethglobal.com/events` |
 | **Unstop** | amber | All categories | Public JSON (browser UA) — best single India source |
 | **Codeforces** | green | Competitions | Official API `codeforces.com/api` |
 | **CodeChef** | green | Competitions | Public JSON contests API |
@@ -47,7 +65,7 @@ All fetched **server-side** (no per-request scraping in the browser), cached for
 | **Scholarships** | seed | Scholarships | Curated dataset of ~29 real Indian awards (govt + private + study-abroad) — no portal exposes an API, so curation is the backbone |
 | **Seed** | seed | Mixed | ~20 curated India-relevant fallbacks so the feed is never empty offline |
 
-> **Avoided on purpose:** LinkedIn / Indeed / Internshala scraping (ToS / legal risk). We deep-link out instead. See `src/lib/sources/*` — each adapter implements the same `SourceAdapter` contract and one failure never sinks the run (`Promise.allSettled`).
+> **Avoided on purpose:** LinkedIn / Indeed / Internshala scraping (ToS / legal risk) and Luma / DoraHacks (strict anti-bot WAFs/hidden search APIs). We deep-link out instead. See `src/lib/sources/*` — each adapter implements the same `SourceAdapter` contract and one failure never sinks the run (`Promise.allSettled`).
 
 ---
 
@@ -72,12 +90,11 @@ Default feed sort is **Closing soonest** (the deadline value prop); also Best ma
 
 ---
 
-## Deadline nudges (`src/lib/nudges.ts`, `/api/nudges`)
+## Deadline nudges (`src/lib/nudges.ts`, `/api/test-nudge`)
 
 - Deadline-**relative** schedule (not a fixed weekly blast): **T-14d** (high-effort scholarships/competitions), **T-7d, T-3d, T-1d, T-3h**.
 - **Relevance-gated** — only high-relevance matches (score > 0.5 or top-N) with a real deadline.
-- **Multi-channel, free-first**: in-app center + **real Web Push** (VAPID, works on localhost — try *Notifications → Send me a test nudge*) + email (set `RESEND_API_KEY`) + one-tap **.ics / Google Calendar** so the student's own calendar is a zero-cost backup.
-- **Loss-aversion copy** with social proof: *"Last call — closes in ~3 hours. Don't lose your shot."*
+- **Multi-channel**: in-app center + **real Web Push** (VAPID) + **Email Notifications** (via Resend) + one-tap **.ics / Google Calendar**.
 - **Anti-fatigue**: per-channel toggles, quiet hours (default 8am–9pm IST), frequency cap, snooze, weekly digest.
 
 ---
@@ -86,46 +103,19 @@ Default feed sort is **Closing soonest** (the deadline value prop); also Best ma
 
 ```
 Browser (Next.js App Router, React 19, Tailwind v4)
-  └─ reads /api/feed, /api/nudges, /api/score  ── never scrapes directly
+  ├─ User Profile & Settings ── Firebase Firestore
+  └─ reads /api/feed, /api/nudges, /api/score
         │
    Route Handlers ── getCorpus() ── 30-min cache (.cache/corpus.json + memory)
-        │                              │ stale → revalidate in background
-        └─ aggregate() ── Promise.allSettled over 9 SourceAdapters
+        │
+        └─ aggregate() ── Promise.allSettled over 10 SourceAdapters
                               normalize → dedupe → corpus
 ```
 
-- **Frontend**: Next.js 16 (App Router, RSC), React 19, Tailwind v4, zustand (localStorage) for profile / saved / prefs.
-- **Data**: file-cache for a zero-config demo. The `SourceAdapter` + aggregator pattern is production-shaped — swap the cache for Postgres/Prisma and run the aggregator on a cron (below) without touching the UI.
-- **No personal data** is stored; we collect zero recruiter data (DPDP-friendly).
-
-### Production deployment (the real shape)
-
-The demo runs everything in-process. For production the research-backed architecture is **scrape-on-cron, frontend-reads-DB**:
-
-- A **GitHub Actions cron** (`.github/workflows/aggregate.yml`, included) runs the aggregator on a schedule and writes to a database; Vercel only reads.
-- The **nudge worker** (`/api/nudges`) is hit by a free hourly external trigger (cron-job.org / GitHub Actions) — Vercel Hobby cron is daily-only and can't fire T-3h.
-- Optional env (`.env.example`): `INGEST_SECRET`, `CRON_SECRET`, `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`, `RESEND_API_KEY`, `ADZUNA_APP_ID`/`KEY`, `TELEGRAM_BOT_TOKEN`.
-
----
-
-## Project map
-
-```
-src/
-  app/
-    page.tsx                 landing
-    onboarding/              3-question setup + live match preview
-    feed/ saved/ notifications/ profile/
-    api/                     feed · opportunities · ingest · score · nudges · ics/[id] · push/*
-  lib/
-    types.ts taxonomy.ts     canonical Opportunity + shared skill vocabulary
-    rank.ts eligibility.ts   the transparent ranking engine
-    nudges.ts ics.ts         deadline scheduler + calendar export
-    feed.ts corpus.ts store.ts  query layer + cache
-    sources/                 9 SourceAdapters + aggregator
-  components/                brand · feed cards · onboarding · layout
-  store/                     zustand: profile · collections · prefs · nudges · theme
-```
+- **Frontend**: Next.js 16 (App Router, RSC), React 19, Tailwind v4.
+- **Backend Storage**: Firebase Firestore for persistent user profiles and preferences.
+- **Data Pipelines**: File-cache for zero-config demo aggregation. The `SourceAdapter` + aggregator pattern is production-shaped — swap the cache for Postgres/Prisma and run the aggregator on a cron without touching the UI.
+- **Email Digest**: Resend SDK integrated via Next.js Serverless API routes.
 
 ---
 
