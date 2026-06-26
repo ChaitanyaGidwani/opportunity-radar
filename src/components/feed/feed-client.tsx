@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Filter, Activity, Inbox, AlertTriangle, CheckCircle2, XCircle, Star, X, ArrowRight, ArrowLeft } from "lucide-react";
+import { Filter, Activity, Inbox, AlertTriangle, CheckCircle2, XCircle, Star, X, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import type { Category, ScoredOpportunity, SourceRun } from "@/lib/types";
 import type { Facets, FilterState, SortKey } from "@/lib/feed";
 import { useProfile } from "@/store/profile";
@@ -65,6 +65,53 @@ export function FeedClient({ initialCategory }: { initialCategory?: Category } =
       clearTimeout(t);
     };
   }, [hydrated, profile, filter, sort]);
+
+  // ── Semantic search (Feature 4) ────────────────────────────────────────────
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiTerms, setAiTerms] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!filter.query || filter.query.trim().length < 5) {
+      setAiTerms([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setAiSearching(true);
+      try {
+        const res = await fetch("/api/ai/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: filter.query, profile }),
+        });
+        if (!res.ok) throw new Error();
+        const json = await res.json();
+        if (!cancelled) {
+          setAiTerms(json.expandedTerms ?? []);
+          // Merge AI results into the existing data if we have some
+          if (data && json.items?.length) {
+            const existingIds = new Set(data.items.map((i: any) => i.opportunity.id));
+            const newItems = json.items.filter((i: any) => !existingIds.has(i.opportunity.id));
+            if (newItems.length > 0) {
+              setData((prev) => prev ? {
+                ...prev,
+                items: [...prev.items, ...newItems],
+                total: prev.total + newItems.length,
+              } : prev);
+            }
+          }
+        }
+      } catch {
+        // Silently fail — keyword search still works
+      } finally {
+        if (!cancelled) setAiSearching(false);
+      }
+    }, 800); // Debounce
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filter.query, profile, data]);
 
   const rescan = async () => {
     setRescanning(true);
@@ -168,6 +215,15 @@ export function FeedClient({ initialCategory }: { initialCategory?: Category } =
           updatedAt={data?.updatedAt}
           lockedCategory={initialCategory}
         />
+        {/* AI search indicator */}
+        {(aiSearching || aiTerms.length > 0) && filter.query && (
+          <div className="mt-2 flex items-center gap-2 text-[12px]">
+            <Sparkles size={12} className={cn("text-purple-500", aiSearching && "animate-pulse")} />
+            <span className="text-purple-600 font-medium">
+              {aiSearching ? "AI expanding search…" : `AI-enhanced search · ${aiTerms.length} related terms`}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* broadened banner */}

@@ -26,6 +26,11 @@ import { googleCalendarUrl } from "@/lib/ics";
 import { logoCandidates } from "@/lib/logo";
 import { useCollections } from "@/store/collections";
 import { cn } from "@/lib/utils";
+import { AISummary } from "../ai/ai-summary";
+import { AIMatchReason } from "../ai/ai-match-reason";
+import { AISmartTags } from "../ai/ai-smart-tags";
+import { AIDeadlineInsight } from "../ai/ai-deadline-insight";
+import { ResumeMatch } from "../ai/resume-match";
 
 const BRANCH_LABEL: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.slug, b.label]));
 
@@ -174,6 +179,9 @@ export function OpportunityDetail({
           </div>
         </div>
 
+        {/* AI deadline insight (Feature 7) */}
+        <AIDeadlineInsight opportunityId={o.id} hasDeadline={!!o.deadline} />
+
         {/* why this matched */}
         {scored.reasons.length > 0 && (
           <div className="space-y-2">
@@ -187,6 +195,8 @@ export function OpportunityDetail({
                 </span>
               ))}
             </div>
+            {/* AI match explanation (Feature 2) */}
+            <AIMatchReason opportunityId={o.id} />
             <button onClick={() => setShowMath((v) => !v)} className="flex items-center gap-1 text-[12px] text-ink-3 hover:text-ink-2">
               <ChevronDown size={13} className={cn("transition-transform", showMath && "rotate-180")} /> How this was scored
             </button>
@@ -198,12 +208,11 @@ export function OpportunityDetail({
           </div>
         )}
 
-        {o.summary && (
-          <div>
-            <p className="mb-1 text-[13px] font-semibold text-ink">About</p>
-            <p className="text-[13px] leading-relaxed text-ink-2">{o.summary}</p>
-          </div>
-        )}
+        {/* AI Summary (Feature 1) — replaces plain summary with structured AI analysis */}
+        <AISummary opportunityId={o.id} fallbackSummary={o.summary} />
+
+        {/* Resume match (Feature 6) */}
+        <ResumeMatch opportunityId={o.id} />
 
         <div>
           <p className="mb-1.5 text-[13px] font-semibold text-ink">Eligibility</p>
@@ -217,6 +226,10 @@ export function OpportunityDetail({
               {o.tags.map((t) => (
                 <Tag key={t}>{SKILL_LABELS[t] ?? t}</Tag>
               ))}
+            </div>
+            {/* AI Smart Tags (Feature 3) */}
+            <div className="mt-2">
+              <AISmartTags opportunityId={o.id} />
             </div>
           </div>
         )}

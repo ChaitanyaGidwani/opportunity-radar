@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Pencil, Star, Clock } from "lucide-react";
+import { ArrowRight, Pencil, Star, Clock, Sparkles } from "lucide-react";
 import type { Category, ScoredOpportunity } from "@/lib/types";
 import { CATEGORIES } from "@/lib/types";
 import { useProfile } from "@/store/profile";
@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Skeleton } from "../ui/primitives";
 import { BRANCHES, SKILL_LABELS } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
+import { WeeklyDigest } from "../ai/weekly-digest";
 
 const BRANCH_LABEL: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.slug, b.label]));
 const CAT_RAIL: Record<Category, string> = {
@@ -101,6 +102,20 @@ export function ForYouClient() {
         </p>
       ) : (
         <>
+          {/* AI Weekly Digest (Feature 8) */}
+          {onboarded && <WeeklyDigest />}
+
+          {/* AI Recommended for You (Feature 5) */}
+          {onboarded && topPicks.length > 0 && (
+            <Rail
+              title="Recommended for you"
+              subtitle="AI-ranked based on your profile, skills & activity"
+              items={topPicks.slice(0, 5)}
+              onOpen={setSelected}
+              aiPowered
+            />
+          )}
+
           {onboarded && closingSoon.length > 0 && (
             <Rail title="Closing soon for you" subtitle="Don't miss these deadlines" items={closingSoon} onOpen={setSelected} urgent />
           )}
@@ -153,12 +168,14 @@ function Rail({
   items,
   onOpen,
   urgent,
+  aiPowered,
 }: {
   title: string;
   subtitle?: string;
   items: ScoredOpportunity[];
   onOpen: (s: ScoredOpportunity) => void;
   urgent?: boolean;
+  aiPowered?: boolean;
 }) {
   if (!items.length) return null;
   return (
@@ -167,6 +184,7 @@ function Rail({
         <div>
           <h2 className={cn("flex items-center gap-2 text-lg font-semibold text-ink")}>
             {urgent && <Clock size={16} className="text-danger" />}
+            {aiPowered && <Sparkles size={16} className="text-purple-500" />}
             {title}
           </h2>
           {subtitle && <p className="mt-0.5 text-[13px] text-ink-2">{subtitle}</p>}

@@ -206,3 +206,71 @@ export interface Nudge {
   read?: boolean;
   snoozedUntil?: string;
 }
+
+// ─── AI types ───────────────────────────────────────────────────────────────
+
+/** AI-generated structured summary for an opportunity. */
+export interface AISummary {
+  what: string;
+  whoShouldApply: string;
+  keyEligibility: string;
+  skillsRequired: string[];
+  benefits: string;
+  importantDeadlines: string;
+  estimatedDifficulty: "Beginner" | "Intermediate" | "Advanced";
+}
+
+/** AI-generated match explanation. */
+export interface AIMatchReason {
+  explanation: string;
+  matchStrength: "Strong" | "Moderate" | "Weak";
+}
+
+/** AI-generated smart tags. */
+export interface AISmartTags {
+  tags: string[];
+}
+
+/** AI-generated deadline intelligence. */
+export interface AIDeadlineInsight {
+  insight: string;
+}
+
+/** Resume analysis result. */
+export interface ResumeAnalysis {
+  matchScore: number;
+  extractedSkills: string[];
+  extractedTechnologies: string[];
+  education: string;
+  projects: string[];
+  missingSkills: string[];
+  strengths: string[];
+  improvements: string[];
+}
+
+/** One row of the comparison table. */
+export interface ComparisonRow {
+  opportunityId: string;
+  title: string;
+  eligibility: string;
+  difficulty: string;
+  benefits: string;
+  learningValue: string;
+  careerImpact: string;
+  deadline: string;
+  recommendation: string;
+}
+
+/** AI comparison result. */
+export interface ComparisonResult {
+  rows: ComparisonRow[];
+  bestPick: string;
+  bestPickReason: string;
+}
+
+/** Weekly digest. */
+export interface WeeklyDigest {
+  summary: string;
+  highlights: { category: string; count: number; note: string }[];
+  urgentDeadlines: { title: string; daysLeft: number }[];
+}

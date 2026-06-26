@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, CircleCheckBig } from "lucide-react";
+import { Bookmark, CircleCheckBig, GitCompareArrows } from "lucide-react";
 import type { ScoredOpportunity } from "@/lib/types";
 import { useProfile } from "@/store/profile";
 import { useCollections } from "@/store/collections";
@@ -9,6 +9,8 @@ import { OpportunityCard } from "../feed/opportunity-card";
 import { OpportunityDetail } from "../feed/opportunity-detail";
 import { Spinner } from "../ui/primitives";
 import { cn } from "@/lib/utils";
+import { ComparisonTable } from "../ai/comparison-table";
+import { Button } from "../ui/button";
 
 export function SavedClient() {
   const profile = useProfile((s) => s.profile);
@@ -21,6 +23,8 @@ export function SavedClient() {
   const [items, setItems] = useState<ScoredOpportunity[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ScoredOpportunity | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const ids = useMemo(() => [...new Set([...saved, ...applied])], [saved, applied]);
   const idsKey = ids.join(",");
@@ -96,6 +100,27 @@ export function SavedClient() {
         ))}
       </div>
 
+      {/* Compare button (Feature 9) */}
+      {list.length >= 2 && (
+        <div className="mt-3 flex items-center gap-3">
+          <p className="text-[12px] text-ink-3">
+            {compareIds.length === 0
+              ? "Select 2–4 to compare"
+              : `${compareIds.length} selected`}
+          </p>
+          {compareIds.length >= 2 && (
+            <Button size="sm" onClick={() => setCompareOpen(true)}>
+              <GitCompareArrows size={14} /> Compare selected
+            </Button>
+          )}
+          {compareIds.length > 0 && (
+            <button onClick={() => setCompareIds([])} className="text-[12px] text-ink-3 hover:text-ink">
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="mt-6">
         {loading && (
           <div className="flex items-center justify-center py-20 text-ink-3">
@@ -120,13 +145,37 @@ export function SavedClient() {
         {!loading && list.length > 0 && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {list.map((s, i) => (
-              <OpportunityCard key={s.opportunity.id} scored={s} onOpen={setSelected} index={i} />
+              <div key={s.opportunity.id} className="relative">
+                {/* Selection checkbox for comparison */}
+                <label className="absolute left-3 top-3 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-line bg-surface/90 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={compareIds.includes(s.opportunity.id)}
+                    onChange={(e) => {
+                      if (e.target.checked && compareIds.length < 4) {
+                        setCompareIds([...compareIds, s.opportunity.id]);
+                      } else {
+                        setCompareIds(compareIds.filter((id) => id !== s.opportunity.id));
+                      }
+                    }}
+                    className="h-3.5 w-3.5 accent-signal-500"
+                  />
+                </label>
+                <OpportunityCard scored={s} onOpen={setSelected} index={i} />
+              </div>
             ))}
           </div>
         )}
       </div>
 
       <OpportunityDetail scored={selected} onClose={() => setSelected(null)} />
+
+      {/* AI Comparison modal (Feature 9) */}
+      <ComparisonTable
+        opportunityIds={compareIds}
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+      />
     </div>
   );
 }
