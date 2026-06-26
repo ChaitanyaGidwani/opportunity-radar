@@ -42,6 +42,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => {
@@ -133,11 +135,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             />
           </div>
           <div className="flex justify-center my-4">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
-              onChange={(token) => setCaptchaToken(token)}
-            />
+            {mounted && (
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
+                onChange={(token) => setCaptchaToken(token)}
+              />
+            )}
           </div>
           <Button type="submit" disabled={isSubmitting || resetSent} className="w-full justify-center">
             {isSubmitting ? "Sending..." : "Send reset link"}
@@ -209,11 +213,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           />
         </div>
         <div className="flex justify-center my-4">
-          <ReCAPTCHA
-            ref={recaptchaRef}
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
-            onChange={(token) => setCaptchaToken(token)}
-          />
+          {mounted && (
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
+              onChange={(token) => setCaptchaToken(token)}
+            />
+          )}
         </div>
         <Button type="submit" disabled={isSubmitting} className="w-full justify-center">
           {isSubmitting ? "Please wait..." : isLogin ? "Sign in" : "Create account"}
