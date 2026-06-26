@@ -82,7 +82,8 @@ if (typeof window !== "undefined") {
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          useProfile.getState()._setProfileData(docSnap.data() as Profile, user.uid);
+          const fetchedData = docSnap.data();
+          useProfile.getState()._setProfileData({ ...EMPTY_PROFILE, ...fetchedData } as Profile, user.uid);
         } else {
           // If no profile exists yet, save the current local one or empty profile to Firestore
           const localProfile = useProfile.getState().profile;

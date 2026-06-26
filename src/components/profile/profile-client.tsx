@@ -37,10 +37,14 @@ export function ProfileClient() {
     return () => unsubscribe();
   }, []);
 
-  const toggleInterest = (c: Category) =>
-    setProfile({ interests: profile.interests.includes(c) ? profile.interests.filter((x) => x !== c) : [...profile.interests, c] });
-  const toggleSkill = (slug: string) =>
-    setProfile({ skills: profile.skills.includes(slug) ? profile.skills.filter((x) => x !== slug) : [...profile.skills, slug] });
+  const toggleInterest = (c: Category) => {
+    const interests = profile.interests || [];
+    setProfile({ interests: interests.includes(c) ? interests.filter((x) => x !== c) : [...interests, c] });
+  };
+  const toggleSkill = (slug: string) => {
+    const skills = profile.skills || [];
+    setProfile({ skills: skills.includes(slug) ? skills.filter((x) => x !== slug) : [...skills, slug] });
+  };
 
   const skillGroups = useMemo(() => {
     const filtered = SKILLS.filter((s) => (skillQuery ? s.label.toLowerCase().includes(skillQuery.toLowerCase()) : true));
@@ -226,7 +230,7 @@ export function ProfileClient() {
               <div className="grid grid-cols-2 gap-2">
                 {INTEREST_OPTIONS.map((opt) => {
                   const Icon = CATEGORY_ICON[opt.value];
-                  const active = profile.interests.includes(opt.value);
+                  const active = (profile.interests || []).includes(opt.value);
                   const color = CATEGORY_COLOR[opt.value];
                   return (
                     <button
@@ -246,7 +250,7 @@ export function ProfileClient() {
           </div>
 
           <div className="mt-4">
-            <Section title={`Skills & interests${profile.skills.length ? ` · ${profile.skills.length} selected` : ""}`} icon={<Star size={15} />}>
+            <Section title={`Skills & interests${(profile.skills || []).length ? ` · ${(profile.skills || []).length} selected` : ""}`} icon={<Star size={15} />}>
               <div className="relative mb-3">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
                 <input
@@ -262,8 +266,8 @@ export function ProfileClient() {
                     <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">{group}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {items.map((s) => (
-                        <Chip key={s.slug} active={profile.skills.includes(s.slug)} onClick={() => toggleSkill(s.slug)}>
-                          {profile.skills.includes(s.slug) && <Check size={12} />}
+                        <Chip key={s.slug} active={(profile.skills || []).includes(s.slug)} onClick={() => toggleSkill(s.slug)}>
+                          {(profile.skills || []).includes(s.slug) && <Check size={12} />}
                           {s.label}
                         </Chip>
                       ))}
@@ -335,7 +339,7 @@ export function ProfileClient() {
           <div className="grid gap-4 md:grid-cols-2">
             <Section title="Interested in" icon={<LayoutGrid size={15} />}>
               <div className="flex flex-wrap gap-2">
-                {profile.interests.length > 0 ? profile.interests.map(i => {
+                {(profile.interests || []).length > 0 ? (profile.interests || []).map(i => {
                   const opt = INTEREST_OPTIONS.find(o => o.value === i);
                   if (!opt) return null;
                   const Icon = CATEGORY_ICON[opt.value];
@@ -352,7 +356,7 @@ export function ProfileClient() {
 
             <Section title="Skills" icon={<Star size={15} />}>
               <div className="flex flex-wrap gap-2">
-                {profile.skills.length > 0 ? profile.skills.map(s => {
+                {(profile.skills || []).length > 0 ? (profile.skills || []).map(s => {
                   const skill = SKILLS.find(x => x.slug === s);
                   return (
                     <span key={s} className="inline-flex items-center rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-ink border border-line">
