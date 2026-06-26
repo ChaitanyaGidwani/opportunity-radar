@@ -11,6 +11,7 @@ import { logoCandidates } from "@/lib/logo";
 import { useCollections } from "@/store/collections";
 import { useToastStore } from "@/store/toast";
 import { cn } from "@/lib/utils";
+import { AISmartTagsInline } from "../ai/ai-smart-tags";
 
 export function OpportunityCard({
   scored,
@@ -143,6 +144,7 @@ export function OpportunityCard({
           </h3>
           {o.summary && <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-2">{o.summary}</p>}
           {reasons}
+          <AISmartTagsInline opportunityId={o.id} />
           {footer}
         </div>
       </article>
@@ -176,6 +178,7 @@ export function OpportunityCard({
           {o.title}
         </h3>
         {reasons}
+        <AISmartTagsInline opportunityId={o.id} />
         {footer}
       </div>
     </article>
