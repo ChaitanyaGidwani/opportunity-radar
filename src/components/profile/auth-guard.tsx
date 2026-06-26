@@ -55,7 +55,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!captchaToken) {
+    if (!captchaToken && process.env.NODE_ENV !== "development") {
       setError("Please verify that you are not a robot.");
       return;
     }
@@ -82,7 +82,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       setError("Please enter your email to reset password.");
       return;
     }
-    if (!captchaToken) {
+    if (!captchaToken && process.env.NODE_ENV !== "development") {
       setError("Please verify that you are not a robot.");
       return;
     }
@@ -135,7 +135,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             />
           </div>
           <div className="flex justify-center my-4">
-            {mounted && (
+            {mounted && process.env.NODE_ENV !== "development" && (
               <ReCAPTCHA
                 ref={recaptchaRef}
                 sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
@@ -213,7 +213,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           />
         </div>
         <div className="flex justify-center my-4">
-          {mounted && (
+          {mounted && process.env.NODE_ENV !== "development" && (
             <ReCAPTCHA
               ref={recaptchaRef}
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
