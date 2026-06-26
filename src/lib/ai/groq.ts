@@ -2,58 +2,46 @@ import "server-only";
 import Groq from "groq-sdk";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Singleton Groq client. Server-side only — the API key never reaches the
-// client bundle because we import "server-only" at the top.
+// Singleton Groq client with automatic Tier-Fallback.
+// If llama-3.3-70b (100k TPD free limit) hits 429 rate limit, it automatically
+// switches to llama-3.1-8b-instant (500k TPD free limit), making the app
+// virtually immune to daily token exhaustion.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const MODEL = "llama-3.3-70b-versatile";
-const MAX_RETRIES = 3;
+const PRIMARY_MODEL = "llama-3.3-70b-versatile";
+const FALLBACK_MODEL = "llama-3.1-8b-instant";
 
-/** Sleep helper for exponential backoff. */
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/** Retry wrapper with exponential backoff for rate-limit errors. */
-async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (err: any) {
-      const isRateLimit = err?.status === 429 || err?.error?.code === "rate_limit_exceeded";
-      if (!isRateLimit || attempt === MAX_RETRIES - 1) throw err;
-      const backoff = Math.pow(2, attempt + 1) * 1000 + Math.random() * 500;
-      console.warn(`[Groq] Rate limited, retrying in ${Math.round(backoff)}ms…`);
-      await sleep(backoff);
+async function createCompletion(params: any): Promise<any> {
+  try {
+    return await groq.chat.completions.create({ ...params, model: PRIMARY_MODEL });
+  } catch (err: any) {
+    const isRateLimit = err?.status === 429 || err?.error?.code === "rate_limit_exceeded" || err?.message?.includes("429") || err?.message?.includes("Rate limit");
+    if (isRateLimit) {
+      console.warn(`[Groq] Primary model rate limit (429). Auto-switching to fallback model (${FALLBACK_MODEL})…`);
+      return await groq.chat.completions.create({ ...params, model: FALLBACK_MODEL });
     }
+    throw err;
   }
-  throw new Error("Unreachable");
 }
 
-/**
- * Generate a structured JSON response. The `jsonSchema` description guides
- * the LLM to produce valid JSON. We parse and return the result.
- */
+/** Generate a structured JSON response. */
 export async function generateJSON<T>(
   systemPrompt: string,
   userPrompt: string,
 ): Promise<T> {
-  return withRetry(async () => {
-    const completion = await groq.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
-      max_tokens: 2048,
-    });
-    const raw = completion.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(raw) as T;
+  const completion = await createCompletion({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.3,
+    max_tokens: 2048,
   });
+  const raw = completion.choices[0]?.message?.content ?? "{}";
+  return JSON.parse(raw) as T;
 }
 
 /** Generate plain text. */
@@ -61,33 +49,43 @@ export async function generateText(
   systemPrompt: string,
   userPrompt: string,
 ): Promise<string> {
-  return withRetry(async () => {
-    const completion = await groq.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.4,
-      max_tokens: 1024,
-    });
-    return completion.choices[0]?.message?.content?.trim() ?? "";
-  });
-}
-
-/** Generate a streaming response (for typewriter effects). */
-export async function generateStream(
-  systemPrompt: string,
-  userPrompt: string,
-) {
-  return groq.chat.completions.create({
-    model: MODEL,
+  const completion = await createCompletion({
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.4,
     max_tokens: 1024,
-    stream: true,
   });
+  return completion.choices[0]?.message?.content?.trim() ?? "";
+}
+
+/** Generate a streaming response. */
+export async function generateStream(
+  systemPrompt: string,
+  userPrompt: string,
+) {
+  try {
+    return await groq.chat.completions.create({
+      model: PRIMARY_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 1024,
+      stream: true,
+    });
+  } catch (err: any) {
+    return await groq.chat.completions.create({
+      model: FALLBACK_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 1024,
+      stream: true,
+    });
+  }
 }
