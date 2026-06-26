@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Chip, Toggle } from "../ui/primitives";
 import { useProfile } from "@/store/profile";
 import { cn } from "@/lib/utils";
+import { ResumeProfileTune } from "./resume-profile-tune";
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -96,6 +97,10 @@ export function ProfileClient() {
             <LogOut size={14} /> Sign out
           </Button>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <ResumeProfileTune />
       </div>
 
       {isEditing ? (

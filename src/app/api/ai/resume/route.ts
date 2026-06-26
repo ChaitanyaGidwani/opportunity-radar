@@ -15,10 +15,6 @@ export async function POST(req: Request) {
     if (!file) {
       return NextResponse.json({ error: "Resume file required" }, { status: 400 });
     }
-    if (!opportunityId) {
-      return NextResponse.json({ error: "opportunityId required" }, { status: 400 });
-    }
-
     // Extract text from file
     const buffer = await file.arrayBuffer();
     const text = await extractTextFromFile(buffer, file.type, file.name);
@@ -28,9 +24,11 @@ export async function POST(req: Request) {
     }
 
     const corpus = await getCorpus();
-    const opp = corpus.opportunities.find((o) => o.id === opportunityId);
+    const opp = opportunityId
+      ? corpus.opportunities.find((o) => o.id === opportunityId) || corpus.opportunities[0]
+      : corpus.opportunities[0];
     if (!opp) {
-      return NextResponse.json({ error: "Opportunity not found" }, { status: 404 });
+      return NextResponse.json({ error: "No opportunities available for analysis" }, { status: 404 });
     }
 
     const { system, user } = resumeAnalysisPrompt(text, opp);
