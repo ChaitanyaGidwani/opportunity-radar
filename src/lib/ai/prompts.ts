@@ -196,7 +196,8 @@ Return JSON:
   "improvements": ["suggestion1", "suggestion2"]
 }
 
-Be honest about the match score. Do NOT inflate it. A 40% match is fine if the student genuinely lacks several required skills.`,
-    user: `## Opportunity\n${oppContext(o)}\n\n## Resume Content\n${resumeText.slice(0, 4000)}`,
+CRITICAL: Keep all array items concise (max 10 words each). Limit every array to maximum 8 items to ensure compact JSON generation.
+Be honest about the match score. Do NOT inflate it.`,
+    user: `## Opportunity\n${oppContext(o)}\n\n## Resume Content\n${resumeText.slice(0, 3500)}`,
   };
 }
