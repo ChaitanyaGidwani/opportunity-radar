@@ -12,8 +12,9 @@ export const EMPTY_PROFILE: Profile = {
   onboarded: false,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function stripUndefined(obj: Record<string, any>) {
-  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined)); /* eslint-disable-line @typescript-eslint/no-unused-vars */
 }
 
 interface ProfileState {

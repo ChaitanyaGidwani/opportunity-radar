@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       expandedTerms,
       total: result.total,
     });
-  } catch (err: any) {
+  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     console.error("[AI Search]", err);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }

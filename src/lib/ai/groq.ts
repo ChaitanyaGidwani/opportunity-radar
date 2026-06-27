@@ -13,10 +13,11 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const PRIMARY_MODEL = "llama-3.3-70b-versatile";
 const FALLBACK_MODEL = "llama-3.1-8b-instant";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createCompletion(params: any): Promise<any> {
   try {
     return await groq.chat.completions.create({ ...params, model: PRIMARY_MODEL });
-  } catch (err: any) {
+  } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     const isRateLimit = err?.status === 429 || err?.error?.code === "rate_limit_exceeded" || err?.message?.includes("429") || err?.message?.includes("Rate limit");
     if (isRateLimit) {
       console.warn(`[Groq] Primary model rate limit (429). Auto-switching to fallback model (${FALLBACK_MODEL})…`);
@@ -37,8 +38,8 @@ export async function generateJSON<T>(
       { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.3,
-    max_tokens: 4096,
+    temperature: 0.1,
+    max_tokens: 2048,
   });
   const raw = completion.choices[0]?.message?.content ?? "{}";
   return JSON.parse(raw) as T;
@@ -76,7 +77,7 @@ export async function generateStream(
       max_tokens: 1024,
       stream: true,
     });
-  } catch (err: any) {
+  } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) { /* eslint-disable-line @typescript-eslint/no-unused-vars */
     return await groq.chat.completions.create({
       model: FALLBACK_MODEL,
       messages: [

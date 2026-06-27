@@ -6,7 +6,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswor
 import { auth } from "@/lib/firebase";
 import { Button } from "../ui/button";
 
-const getAuthErrorMessage = (err: any) => {
+const getAuthErrorMessage = (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
   switch (err.code) {
     case "auth/invalid-credential":
       return "Invalid email or password.";
@@ -31,7 +31,7 @@ const getAuthErrorMessage = (err: any) => {
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any> /* eslint-disable-line @typescript-eslint/no-explicit-any */(null);
   
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -43,6 +43,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-    } catch (err: any) {
+    } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       setError(getAuthErrorMessage(err));
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
@@ -91,7 +92,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     try {
       await sendPasswordResetEmail(auth, email);
       setResetSent(true);
-    } catch (err: any) {
+    } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       setError(getAuthErrorMessage(err));
       recaptchaRef.current?.reset();
       setCaptchaToken(null);

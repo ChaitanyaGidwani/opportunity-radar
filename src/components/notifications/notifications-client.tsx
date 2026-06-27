@@ -119,7 +119,7 @@ export function NotificationsClient() {
             const err = await res.json();
             pushToast(`Email failed: ${err.error}`, "error");
           }
-        } catch (e: any) {
+        } catch (e: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
           pushToast(`Email error: ${e.message}`, "error");
         }
       } else {

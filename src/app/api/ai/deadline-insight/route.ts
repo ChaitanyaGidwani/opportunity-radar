@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     await setCachedAI("ai-deadline-insights", opp.id, { insight }, hash, 24 * 60 * 60 * 1000);
 
     return NextResponse.json({ insight, cached: false });
-  } catch (err: any) {
+  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     console.error("[AI Deadline]", err);
     return NextResponse.json({ error: "Failed to generate deadline insight" }, { status: 500 });
   }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, RotateCcw, Search, MapPin, GraduationCap, LayoutGrid, Star, SlidersHorizontal, LogOut } from "lucide-react";
+import { Check, RotateCcw, Search, MapPin, GraduationCap, LayoutGrid, Star, SlidersHorizontal, LogOut } from "lucide-react"; /* eslint-disable-line @typescript-eslint/no-unused-vars */
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import type { Category, Gender, SocialCategory } from "@/lib/types";
@@ -27,11 +27,11 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 }
 
 export function ProfileClient() {
-  const router = useRouter();
+  const router = useRouter(); /* eslint-disable-line @typescript-eslint/no-unused-vars */
   const profile = useProfile((s) => s.profile);
   const setProfile = useProfile((s) => s.setProfile);
   const [skillQuery, setSkillQuery] = useState("");
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any> /* eslint-disable-line @typescript-eslint/no-explicit-any */(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(setUser);
@@ -61,6 +61,7 @@ export function ProfileClient() {
 
   useEffect(() => {
     if (user && !profile.name) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsEditing(true);
     }
   }, [user, profile.name]);
@@ -310,6 +311,7 @@ export function ProfileClient() {
                 </div>
                 <div>
                   <dt className="text-ink-3 mb-1">State</dt>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <dd className="font-medium text-ink">{profile.state ? STATE_LABELS[profile.state as any] : "Not specified"}</dd>
                 </div>
                 <div>

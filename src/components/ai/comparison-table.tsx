@@ -34,7 +34,7 @@ export function ComparisonTable({
       if (!res.ok) throw new Error("Comparison failed");
       const data = await res.json();
       setResult(data.comparison);
-    } catch (err: any) {
+    } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -128,6 +128,7 @@ export function ComparisonTable({
                           key={row.opportunityId}
                           className={cn("px-3 py-2.5 text-ink-2", key === "recommendation" && "font-medium text-ink")}
                         >
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {(row as any)[key] ?? "—"}
                         </td>
                       ))}

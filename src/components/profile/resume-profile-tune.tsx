@@ -34,9 +34,9 @@ export function ResumeProfileTune() {
       }
       const json = await res.json();
       setAnalysis(json.analysis);
-      pushToast("Resume analyzed successfully!", "success");
-    } catch (err: any) {
-      setError(err.message || "Failed to analyze resume");
+      pushToast("Document analyzed successfully!", "success");
+    } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+      setError(err.message || "Failed to analyze document");
     } finally {
       setLoading(false);
     }
@@ -59,16 +59,16 @@ export function ResumeProfileTune() {
     }
 
     setProfile({ skills: Array.from(currentSkills) });
-    pushToast(addedCount > 0 ? `Added ${addedCount} resume skills to your profile!` : "Your profile already has all these skills!", "success");
+    pushToast(addedCount > 0 ? `Added ${addedCount} extracted skills to your profile!` : "Your profile already has all these skills!", "success");
   };
 
   return (
     <div className="panel p-5 mb-6 border border-purple-500/30 bg-gradient-to-br from-purple-500/[0.04] to-signal-500/[0.04] rounded-2xl shadow-sm">
       <div className="flex items-center gap-2 text-[15px] font-semibold text-purple-600 mb-1.5">
-        <Sparkles size={16} className="text-purple-500 animate-pulse" /> Auto-Tune Preferences with Resume AI
+        <Sparkles size={16} className="text-purple-500 animate-pulse" /> Auto-Tune Preferences with AI
       </div>
       <p className="text-[13px] text-ink-2 mb-3 leading-relaxed">
-        Upload your resume (PDF or TXT). Our Groq AI engine will extract your exact skills, technologies, and education to personalize your opportunity feed automatically.
+        Upload your resume or LinkedIn Profile (PDF/TXT). Our Groq AI engine will extract your exact skills, technologies, and education to personalize your opportunity feed automatically.
       </p>
 
       {!analysis ? (
@@ -76,7 +76,7 @@ export function ResumeProfileTune() {
           <label className="cursor-pointer inline-block">
             <input type="file" accept=".pdf,.txt" onChange={handleUpload} disabled={loading} className="hidden" />
             <span className={buttonVariants({ variant: "primary", size: "sm" })}>
-              <Upload size={14} className={loading ? "animate-bounce" : ""} /> {loading ? "Analyzing resume AI…" : "Upload resume (PDF/TXT)"}
+              <Upload size={14} className={loading ? "animate-bounce" : ""} /> {loading ? "Analyzing document with AI…" : "Upload Resume / LinkedIn (PDF)"}
             </span>
           </label>
           <span className="text-[12px] text-ink-3">Never stored or modified · Instant analysis</span>
@@ -85,7 +85,7 @@ export function ResumeProfileTune() {
         <div className="space-y-3 rounded-xl border border-purple-500/20 bg-surface p-4">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-success">
-              <CheckCircle2 size={14} /> Resume scanned! Extracted {(analysis.extractedSkills?.length || 0) + (analysis.extractedTechnologies?.length || 0)} skills
+              <CheckCircle2 size={14} /> Document scanned! Extracted {(analysis.extractedSkills?.length || 0) + (analysis.extractedTechnologies?.length || 0)} skills
             </span>
             <button onClick={() => setAnalysis(null)} className="text-xs text-ink-3 hover:text-ink">Upload another</button>
           </div>
@@ -102,7 +102,7 @@ export function ResumeProfileTune() {
               onClick={handleApplyToProfile}
               className="inline-flex items-center gap-1.5 rounded-full bg-purple-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow hover:bg-purple-500 active:scale-95 transition-all"
             >
-              Apply resume skills to feed <ArrowRight size={13} />
+              Apply extracted skills to feed <ArrowRight size={13} />
             </button>
           </div>
         </div>

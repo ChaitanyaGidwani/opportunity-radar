@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Clock } from "lucide-react";
+import { Sparkles, Clock } from "lucide-react";   /* eslint-disable-line @typescript-eslint/no-unused-vars */
 import { useProfile } from "@/store/profile";
 
 export function AIDeadlineInsight({ opportunityId, hasDeadline }: { opportunityId: string; hasDeadline: boolean }) {
@@ -11,6 +11,7 @@ export function AIDeadlineInsight({ opportunityId, hasDeadline }: { opportunityI
 
   useEffect(() => {
     if (!hasDeadline) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }

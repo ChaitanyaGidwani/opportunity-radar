@@ -182,7 +182,7 @@ Be objective. Do NOT fabricate details not in the input.`,
 
 export function resumeAnalysisPrompt(resumeText: string, o: Opportunity) {
   return {
-    system: `You analyze a student's resume against a specific opportunity. Extract skills, technologies, education, and projects from the resume, then compare against the opportunity requirements.
+    system: `You analyze a student's resume or LinkedIn profile against a specific opportunity. Extract skills, technologies, education, and projects from the document, then compare against the opportunity requirements.
 
 Return JSON:
 {
@@ -191,13 +191,14 @@ Return JSON:
   "extractedTechnologies": ["tech1", "tech2"],
   "education": "degree and institution",
   "projects": ["project1", "project2"],
-  "missingSkills": ["skill the opportunity wants but resume lacks"],
+  "missingSkills": ["skill the opportunity wants but document lacks"],
   "strengths": ["strength1", "strength2"],
   "improvements": ["suggestion1", "suggestion2"]
 }
 
 CRITICAL: Keep all array items concise (max 10 words each). Limit every array to maximum 8 items to ensure compact JSON generation.
-Be honest about the match score. Do NOT inflate it.`,
-    user: `## Opportunity\n${oppContext(o)}\n\n## Resume Content\n${resumeText.slice(0, 3500)}`,
+Be honest about the match score. Do NOT inflate it.
+OUTPUT ONLY JSON. NO MARKDOWN, NO EXPLANATION.`,
+    user: `## Opportunity\n${oppContext(o)}\n\n## Document Content\n${resumeText.slice(0, 3500)}`,
   };
 }
