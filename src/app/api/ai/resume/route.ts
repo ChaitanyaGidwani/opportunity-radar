@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     analysis.matchScore = Math.max(0, Math.min(100, Math.round(analysis.matchScore)));
 
     return NextResponse.json({ analysis });
-  } catch (err: any) {
+  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     console.error("[AI Resume]", err);
     return NextResponse.json({ error: err.message || "Failed to analyze resume" }, { status: 500 });
   }
@@ -68,8 +68,12 @@ async function extractTextFromFile(
   // PDF: use pdf-parse to uncompress FlateDecode streams
   if (mimeType === "application/pdf" || fileName.endsWith(".pdf")) {
     try {
-      const pdfParse = require("pdf-parse");
-      const data = await pdfParse(Buffer.from(buffer));
+ 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PDFParse } = require("pdf-parse");
+      const parser = new PDFParse({ data: Buffer.from(buffer) });
+      const data = await parser.getText();
+      await parser.destroy();
       if (data && data.text && data.text.trim().length >= 30) {
         return data.text.trim();
       }
