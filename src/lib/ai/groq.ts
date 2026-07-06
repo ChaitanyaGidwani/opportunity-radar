@@ -37,11 +37,22 @@ export async function generateJSON<T>(
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    response_format: { type: "json_object" },
     temperature: 0.1,
     max_tokens: 2048,
   });
-  const raw = completion.choices[0]?.message?.content ?? "{}";
+  
+  let raw = completion.choices[0]?.message?.content ?? "{}";
+  
+  // Clean markdown formatting if present
+  raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+  
+  // Extract JSON object safely
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end >= start) {
+    raw = raw.slice(start, end + 1);
+  }
+  
   return JSON.parse(raw) as T;
 }
 

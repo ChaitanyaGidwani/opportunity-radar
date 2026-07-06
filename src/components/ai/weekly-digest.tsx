@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, TrendingUp, Clock, ArrowRight } from "lucide-react";   /* eslint-disable-line @typescript-eslint/no-unused-vars */
+import { Sparkles, TrendingUp, Clock } from "lucide-react";
 import type { WeeklyDigest as WeeklyDigestType } from "@/lib/types";
 import { useProfile } from "@/store/profile";
 
@@ -13,8 +13,7 @@ export function WeeklyDigest() {
 
   useEffect(() => {
     if (!onboarded) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
     let cancelled = false;

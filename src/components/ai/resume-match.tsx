@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { FileText, Upload, CheckCircle2, XCircle, TrendingUp, AlertTriangle } from "lucide-react";
 import type { ResumeAnalysis } from "@/lib/types";
-import { Button, buttonVariants } from "../ui/button";   /* eslint-disable-line @typescript-eslint/no-unused-vars */
+import { buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 
 export function ResumeMatch({ opportunityId }: { opportunityId: string }) {
@@ -39,8 +39,8 @@ export function ResumeMatch({ opportunityId }: { opportunityId: string }) {
       }
       const data = await res.json();
       setAnalysis(data.analysis);
-    } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
-      setError(err.message || "Failed to analyze resume");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to analyze resume");
     } finally {
       setLoading(false);
     }

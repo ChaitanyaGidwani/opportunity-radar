@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     await setCachedAI("ai-tags", opportunityId, { tags }, hash);
 
     return NextResponse.json({ tags, cached: false });
-  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (err: unknown) {
     console.error("[AI Tags]", err);
     return NextResponse.json({ error: "Failed to generate tags" }, { status: 500 });
   }

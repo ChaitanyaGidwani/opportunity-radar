@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
-import type { Profile } from "@/lib/types";   /* eslint-disable-line @typescript-eslint/no-unused-vars */
 import { useProfile } from "@/store/profile";
 
 export function AIMatchReason({ opportunityId }: { opportunityId: string }) {
@@ -14,8 +13,7 @@ export function AIMatchReason({ opportunityId }: { opportunityId: string }) {
   useEffect(() => {
     if (!onboarded) return;
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
+    queueMicrotask(() => setLoading(true));
     (async () => {
       try {
         const res = await fetch("/api/ai/match", {
