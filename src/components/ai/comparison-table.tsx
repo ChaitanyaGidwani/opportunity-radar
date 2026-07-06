@@ -128,7 +128,7 @@ export function ComparisonTable({
                           key={row.opportunityId}
                           className={cn("px-3 py-2.5 text-ink-2", key === "recommendation" && "font-medium text-ink")}
                         >
-                          {(row as Record<string, unknown>)[key] as React.ReactNode ?? "—"}
+                          {(row as unknown as Record<string, unknown>)[key] as React.ReactNode ?? "—"}
                         </td>
                       ))}
                     </tr>
