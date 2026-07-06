@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const digest = await generateJSON<WeeklyDigest>(system, user);
 
     return NextResponse.json({ digest });
-  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (err: unknown) {
     console.error("[AI Digest]", err);
     return NextResponse.json({ error: "Failed to generate digest" }, { status: 500 });
   }

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     await setCachedAI("ai-match-reasons", cacheId, result, hash, 24 * 60 * 60 * 1000);
 
     return NextResponse.json({ match: result, cached: false });
-  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (err: unknown) {
     console.error("[AI Match]", err);
     return NextResponse.json({ error: "Failed to generate match reason" }, { status: 500 });
   }

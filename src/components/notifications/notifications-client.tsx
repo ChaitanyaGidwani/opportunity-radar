@@ -119,8 +119,8 @@ export function NotificationsClient() {
             const err = await res.json();
             pushToast(`Email failed: ${err.error}`, "error");
           }
-        } catch (e: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
-          pushToast(`Email error: ${e.message}`, "error");
+        } catch (e: unknown) {
+          pushToast(`Email error: ${e instanceof Error ? e.message : String(e)}`, "error");
         }
       } else {
         pushToast("No email found to send to.", "error");

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const comparison = await generateJSON<ComparisonResult>(system, user);
 
     return NextResponse.json({ comparison });
-  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (err: unknown) {
     console.error("[AI Compare]", err);
     return NextResponse.json({ error: "Failed to generate comparison" }, { status: 500 });
   }

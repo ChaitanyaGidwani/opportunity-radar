@@ -72,8 +72,7 @@ export function FeedClient({ initialCategory }: { initialCategory?: Category } =
 
   useEffect(() => {
     if (!filter.query || filter.query.trim().length < 5) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAiTerms([]);
+      queueMicrotask(() => setAiTerms([]));
       return;
     }
     let cancelled = false;
@@ -91,8 +90,8 @@ export function FeedClient({ initialCategory }: { initialCategory?: Category } =
           setAiTerms(json.expandedTerms ?? []);
           // Merge AI results into the existing data if we have some
           if (data && json.items?.length) {
-            const existingIds = new Set(data.items.map((i: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => i.opportunity.id));
-            const newItems = json.items.filter((i: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => !existingIds.has(i.opportunity.id));
+            const existingIds = new Set(data.items.map((i: ScoredOpportunity) => i.opportunity.id));
+            const newItems = json.items.filter((i: ScoredOpportunity) => !existingIds.has(i.opportunity.id));
             if (newItems.length > 0) {
               setData((prev) => prev ? {
                 ...prev,

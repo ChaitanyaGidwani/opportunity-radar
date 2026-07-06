@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     await setCachedAI("ai-summaries", opportunityId, summary, hash);
 
     return NextResponse.json({ summary, cached: false });
-  } catch (err: any   /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (err: unknown) {
     console.error("[AI Summary]", err);
     return NextResponse.json({ error: "Failed to generate summary" }, { status: 500 });
   }
