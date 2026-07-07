@@ -47,7 +47,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ analysis });
   } catch (err: unknown) {
     console.error("[AI Resume]", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to analyze resume" }, { status: 500 });
+    let msg = "Failed to analyze resume";
+    if (err instanceof Error) {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.error && parsed.error.message) {
+          msg = parsed.error.message;
+        } else {
+          msg = err.message;
+        }
+      } catch {
+        msg = err.message;
+      }
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
