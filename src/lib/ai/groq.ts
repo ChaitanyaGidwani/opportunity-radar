@@ -38,7 +38,8 @@ export async function generateJSON<T>(
       { role: "user", content: userPrompt },
     ],
     temperature: 0.1,
-    max_tokens: 2048,
+    max_tokens: 4096,
+    response_format: { type: "json_object" },
   });
   
   let raw = completion.choices[0]?.message?.content ?? "{}";
