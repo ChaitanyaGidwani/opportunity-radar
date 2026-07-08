@@ -82,10 +82,9 @@ async function extractTextFromFile(
   if (mimeType === "application/pdf" || fileName.endsWith(".pdf")) {
     try {
  
-      const { PDFParse } = await import("pdf-parse");
-      const parser = new PDFParse({ data: Buffer.from(buffer) });
-      const data = await parser.getText();
-      await parser.destroy();
+      const pdfParseModule = await import("pdf-parse/lib/pdf-parse.js");
+      const pdfParse = pdfParseModule.default || pdfParseModule;
+      const data = await pdfParse(Buffer.from(buffer));
       if (data && data.text && data.text.trim().length >= 30) {
         return data.text.trim();
       }
