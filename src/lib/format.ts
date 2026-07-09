@@ -112,4 +112,5 @@ export const CATEGORY_META: Record<
   scholarship: { label: "Scholarships", singular: "Scholarship", color: "var(--color-cat-scholarship)", tint: "cat-scholarship" },
   competition: { label: "Competitions", singular: "Competition", color: "var(--color-cat-competition)", tint: "cat-competition" },
   hackathon: { label: "Hackathons", singular: "Hackathon", color: "var(--color-cat-hackathon)", tint: "cat-hackathon" },
+  event: { label: "Events", singular: "Event", color: "var(--color-cat-event)", tint: "cat-event" },
 };

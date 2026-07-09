@@ -30,6 +30,7 @@
   --color-cat-scholarship: oklch(0.585 0.18 300);
   --color-cat-competition: oklch(0.74 0.16 62);
   --color-cat-hackathon: oklch(0.7 0.135 192);
+  --color-cat-event: oklch(0.68 0.16 150);
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;

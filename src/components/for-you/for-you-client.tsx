@@ -20,6 +20,7 @@ const CAT_RAIL: Record<Category, string> = {
   scholarship: "Scholarships you qualify for",
   competition: "Competitions for you",
   hackathon: "Hackathons for you",
+  event: "Events near you",
 };
 const MS_DAY = 86_400_000;
 
@@ -52,7 +53,7 @@ export function ForYouClient() {
   }, [hydrated, profile]);
 
   const byCat = useMemo(() => {
-    const m: Record<Category, ScoredOpportunity[]> = { internship: [], scholarship: [], competition: [], hackathon: [] };
+    const m: Record<Category, ScoredOpportunity[]> = { internship: [], scholarship: [], competition: [], hackathon: [], event: [] };
     (items ?? []).forEach((s) => m[s.opportunity.category].push(s));
     return m;
   }, [items]);

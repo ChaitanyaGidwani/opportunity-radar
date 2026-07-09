@@ -11,6 +11,7 @@ import { arbeitnowAdapter } from "./arbeitnow";
 import { adzunaAdapter } from "./adzuna";
 import { kaggleAdapter } from "./kaggle";
 import { scholarshipsAdapter } from "./scholarships";
+import { lumaAdapter } from "./luma";
 import { seedAdapter } from "./seed";
 
 const adzunaConfigured = !!(process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY);
@@ -35,6 +36,7 @@ export const ADAPTERS: SourceAdapter[] = [
   ...(adzunaConfigured ? [adzunaAdapter] : []),
   ...(kaggleConfigured ? [kaggleAdapter] : []),
   scholarshipsAdapter,
+  lumaAdapter,
   seedAdapter,
 ];
 

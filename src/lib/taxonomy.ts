@@ -243,4 +243,5 @@ export const INTEREST_OPTIONS: { value: import("./types").Category; label: strin
   { value: "scholarship", label: "Scholarships", blurb: "Govt + private financial aid" },
   { value: "competition", label: "Competitions", blurb: "Coding contests, case comps, quizzes" },
   { value: "hackathon", label: "Hackathons", blurb: "Devpost, Devfolio, ETHIndia & more" },
+  { value: "event", label: "Events", blurb: "Meetups, workshops & talks near you (Luma)" },
 ];

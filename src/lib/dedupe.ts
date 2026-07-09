@@ -14,6 +14,7 @@ const SOURCE_PRIORITY: Record<string, number> = {
   arbeitnow: 6,
   adzuna: 6,
   scholarships: 5,
+  luma: 5,
   seed: 1,
 };
 
