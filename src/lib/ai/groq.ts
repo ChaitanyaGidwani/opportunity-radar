@@ -14,16 +14,48 @@ const PRIMARY_MODEL = "llama-3.3-70b-versatile";
 const FALLBACK_MODEL = "llama-3.1-8b-instant";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isRateLimit(err: any): boolean {
+  return (
+    err?.status === 429 ||
+    err?.error?.code === "rate_limit_exceeded" ||
+    err?.message?.includes("429") ||
+    err?.message?.includes("Rate limit")
+  );
+}
+
+/**
+ * Groq's TPM rate limiter tells you exactly how long to wait
+ * (e.g. "Please try again in 40.6s"). Parse that instead of guessing, capped
+ * so a single request can never stall a serverless function for too long.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function retryAfterMs(err: any, capMs = 4000): number {
+  const msg = err?.message || err?.error?.message || "";
+  const match = /try again in ([\d.]+)s/i.exec(msg);
+  if (match) return Math.min(Math.ceil(parseFloat(match[1]) * 1000), capMs);
+  return Math.min(1500, capMs);
+}
+
+/**
+ * Primary → fallback model → one backoff-and-retry of the fallback. Only the
+ * last attempt's error is thrown; everything else is a warn + retry.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createCompletion(params: any): Promise<any> {
   try {
     return await groq.chat.completions.create({ ...params, model: PRIMARY_MODEL });
   } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
-    const isRateLimit = err?.status === 429 || err?.error?.code === "rate_limit_exceeded" || err?.message?.includes("429") || err?.message?.includes("Rate limit");
-    if (isRateLimit) {
-      console.warn(`[Groq] Primary model rate limit (429). Auto-switching to fallback model (${FALLBACK_MODEL})…`);
+    if (!isRateLimit(err)) throw err;
+    console.warn(`[Groq] Primary model rate limit (429). Auto-switching to fallback model (${FALLBACK_MODEL})…`);
+    try {
+      return await groq.chat.completions.create({ ...params, model: FALLBACK_MODEL });
+    } catch (err2: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+      if (!isRateLimit(err2)) throw err2;
+      const waitMs = retryAfterMs(err2);
+      console.warn(`[Groq] Fallback model also rate limited (429). Retrying in ${waitMs}ms…`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
       return await groq.chat.completions.create({ ...params, model: FALLBACK_MODEL });
     }
-    throw err;
   }
 }
 
@@ -31,6 +63,7 @@ async function createCompletion(params: any): Promise<any> {
 export async function generateJSON<T>(
   systemPrompt: string,
   userPrompt: string,
+  maxTokens = 4096,
 ): Promise<T> {
   const completion = await createCompletion({
     messages: [
@@ -38,7 +71,7 @@ export async function generateJSON<T>(
       { role: "user", content: userPrompt },
     ],
     temperature: 0.1,
-    max_tokens: 4096,
+    max_tokens: maxTokens,
     response_format: { type: "json_object" },
   });
   

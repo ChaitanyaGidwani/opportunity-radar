@@ -6,6 +6,8 @@ import { seedAdapter } from "@/lib/sources/seed";
 import type { ResumeAnalysis } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+// Backoff retry on rate limit can add a few seconds — give it headroom.
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
@@ -39,7 +41,9 @@ export async function POST(req: Request) {
     }
 
     const { system, user } = resumeAnalysisPrompt(text, opp);
-    const analysis = await generateJSON<ResumeAnalysis>(system, user);
+    // Output is capped to ~8 short array items per field — 1200 tokens is
+    // generous headroom without reserving 4096 tokens of TPM budget per call.
+    const analysis = await generateJSON<ResumeAnalysis>(system, user, 1200);
 
     // Clamp score to 0-100
     analysis.matchScore = Math.max(0, Math.min(100, Math.round(analysis.matchScore)));
