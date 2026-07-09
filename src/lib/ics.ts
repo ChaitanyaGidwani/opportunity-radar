@@ -23,7 +23,7 @@ export function buildICS(o: Opportunity): string {
     ? toICSDate(new Date(new Date(dt).getTime() + 3_600_000).toISOString())
     : start;
   const meta = CATEGORY_META[o.category];
-  const summary = `⏰ ${meta.singular} deadline: ${o.title}`;
+  const summary = o.category === "event" ? `📅 ${o.title}` : `⏰ ${meta.singular} deadline: ${o.title}`;
   const desc = [
     `${meta.singular}${o.organization ? ` · ${o.organization}` : ""}`,
     o.summary ?? "",
@@ -73,7 +73,7 @@ export function googleCalendarUrl(o: Opportunity): string {
   const meta = CATEGORY_META[o.category];
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: `⏰ ${meta.singular} deadline: ${o.title}`,
+    text: o.category === "event" ? `📅 ${o.title}` : `⏰ ${meta.singular} deadline: ${o.title}`,
     dates: `${start}/${end}`,
     details: `${o.summary ?? ""}\n\nApply / details: ${o.sourceUrl}\n\nReminder by Argus.`,
     location: o.sourceUrl,

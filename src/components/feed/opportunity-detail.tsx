@@ -244,7 +244,7 @@ export function OpportunityDetail({
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t border-line bg-surface px-5 py-3">
         <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[160px]">
           <Button className="w-full" size="md">
-            Apply on {o.sourceLabel} <ExternalLink size={15} />
+            {o.category === "event" ? "RSVP on" : "Apply on"} {o.sourceLabel} <ExternalLink size={15} />
           </Button>
         </a>
         <Button variant="secondary" size="icon" aria-label={saved ? "Unsave" : "Save"} onClick={() => toggleSaved(o.id)}>

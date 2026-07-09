@@ -1,4 +1,4 @@
-import { Briefcase, GraduationCap, Trophy, Code2, type LucideIcon } from "lucide-react";
+import { Briefcase, GraduationCap, Trophy, Code2, CalendarDays, type LucideIcon } from "lucide-react";
 import type { Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -7,6 +7,7 @@ export const CATEGORY_ICON: Record<Category, LucideIcon> = {
   scholarship: GraduationCap,
   competition: Trophy,
   hackathon: Code2,
+  event: CalendarDays,
 };
 
 export const CATEGORY_COLOR: Record<Category, string> = {
@@ -14,6 +15,7 @@ export const CATEGORY_COLOR: Record<Category, string> = {
   scholarship: "var(--color-cat-scholarship)",
   competition: "var(--color-cat-competition)",
   hackathon: "var(--color-cat-hackathon)",
+  event: "var(--color-cat-event)",
 };
 
 export const CATEGORY_LABEL: Record<Category, string> = {
@@ -21,6 +23,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   scholarship: "Scholarship",
   competition: "Competition",
   hackathon: "Hackathon",
+  event: "Event",
 };
 
 /** Always icon + label together — never colour alone (WCAG). */

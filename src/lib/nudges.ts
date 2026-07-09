@@ -41,6 +41,22 @@ function copyFor(o: Opportunity, w: NudgeWindow): string {
     o.popularity && o.popularity > 200
       ? ` ${o.popularity.toLocaleString("en-IN")} students are already in.`
       : "";
+
+  if (o.category === "event") {
+    switch (w) {
+      case "T-14d":
+        return `Two weeks out — "${title}" happens ${by}. Save your spot if you haven't RSVP'd.${social}`;
+      case "T-7d":
+        return `One week out for "${title}".${social} Spots tend to fill up — RSVP soon.`;
+      case "T-3d":
+        return `Only 3 days away — "${title}" happens ${by}. Lock in your RSVP.`;
+      case "T-1d":
+        return `Happening tomorrow: "${title}".`;
+      case "T-3h":
+        return `Starting soon — "${title}" kicks off in ~3 hours.`;
+    }
+  }
+
   switch (w) {
     case "T-14d":
       return `Two weeks to go — "${title}" closes ${by}. Block 20 minutes this week to start your application.${social}`;

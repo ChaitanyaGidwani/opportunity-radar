@@ -4,13 +4,14 @@
 // shape — the feed, the ranking engine, the nudge scheduler, the UI cards.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Category = "internship" | "scholarship" | "competition" | "hackathon";
+export type Category = "internship" | "scholarship" | "competition" | "hackathon" | "event";
 
 export const CATEGORIES: Category[] = [
   "internship",
   "scholarship",
   "competition",
   "hackathon",
+  "event",
 ];
 
 export type SocialCategory = "general" | "obc" | "sc" | "st" | "ews";
