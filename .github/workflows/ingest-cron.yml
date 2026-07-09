@@ -1,0 +1,15 @@
+name: Refresh opportunity corpus
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /api/ingest
+        run: |
+          curl -sf -X POST "https://opportunity-radar-theta.vercel.app/api/ingest" \
+            -H "Authorization: Bearer ${{ secrets.INGEST_SECRET }}"
