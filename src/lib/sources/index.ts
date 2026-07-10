@@ -13,6 +13,7 @@ import { kaggleAdapter } from "./kaggle";
 import { scholarshipsAdapter } from "./scholarships";
 import { lumaAdapter } from "./luma";
 import { seedAdapter } from "./seed";
+import { dorahacksAdapter } from "./dorahacks";
 
 const adzunaConfigured = !!(process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY);
 const kaggleConfigured = !!(process.env.KAGGLE_USERNAME && process.env.KAGGLE_KEY);
@@ -37,6 +38,7 @@ export const ADAPTERS: SourceAdapter[] = [
   ...(kaggleConfigured ? [kaggleAdapter] : []),
   scholarshipsAdapter,
   lumaAdapter,
+  dorahacksAdapter,
   seedAdapter,
 ];
 
