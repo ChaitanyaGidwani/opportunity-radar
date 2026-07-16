@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signInWithPopup, type AuthProvider } from "firebase/auth";
+import { auth, googleProvider, githubProvider, linkedinProvider } from "@/lib/firebase";
 import { Button } from "../ui/button";
 
 const getAuthErrorMessage = (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
@@ -24,6 +24,15 @@ const getAuthErrorMessage = (err: any /* eslint-disable-line @typescript-eslint/
       return "Too many failed attempts. Please try again later.";
     case "auth/network-request-failed":
       return "Network error. Please check your connection.";
+    case "auth/account-exists-with-different-credential":
+      return "An account already exists with this email using a different sign-in method. Try another provider or email sign-in.";
+    case "auth/popup-blocked":
+      return "Popup was blocked by your browser. Please allow popups and try again.";
+    case "auth/cancelled-popup-request":
+    case "auth/popup-closed-by-user":
+      return "";
+    case "auth/operation-not-allowed":
+      return "This sign-in method is not enabled. Please contact support.";
     default:
       return err.message || "An unexpected error occurred. Please try again.";
   }
@@ -40,6 +49,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [mounted, setMounted] = useState(false);
@@ -74,6 +84,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       setCaptchaToken(null);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialSignIn = async (provider: AuthProvider, name: string) => {
+    setError("");
+    setSocialProvider(name);
+    try {
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged handles the rest — new users are auto-created.
+    } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+      const msg = getAuthErrorMessage(err);
+      if (msg) setError(msg);
+    } finally {
+      setSocialProvider(null);
     }
   };
 
@@ -173,7 +197,57 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       </h2>
       
       {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-      
+
+      <div className="space-y-2.5">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => handleSocialSignIn(googleProvider, "google")}
+          disabled={socialProvider !== null || isSubmitting}
+          className="w-full justify-center"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24z" />
+            <path fill="#FBBC05" d="M5.27 14.29A7.16 7.16 0 0 1 4.89 12c0-.8.14-1.57.38-2.29V6.62H1.29a11.99 11.99 0 0 0 0 10.76l3.98-3.09z" />
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z" />
+          </svg>
+          {socialProvider === "google" ? "Signing in..." : "Continue with Google"}
+        </Button>
+        {process.env.NEXT_PUBLIC_ENABLE_LINKEDIN === "true" && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => handleSocialSignIn(linkedinProvider, "linkedin")}
+            disabled={socialProvider !== null || isSubmitting}
+            className="w-full justify-center"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true">
+              <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05a3.74 3.74 0 0 1 3.37-1.85c3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+            </svg>
+            {socialProvider === "linkedin" ? "Signing in..." : "Continue with LinkedIn"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => handleSocialSignIn(githubProvider, "github")}
+          disabled={socialProvider !== null || isSubmitting}
+          className="w-full justify-center"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.28-.01-1.04-.02-2.04-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          {socialProvider === "github" ? "Signing in..." : "Continue with GitHub"}
+        </Button>
+      </div>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-line" />
+        <span className="text-[11px] font-medium uppercase tracking-wide text-ink-3">or</span>
+        <div className="h-px flex-1 bg-line" />
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1.5 block text-[12px] font-medium text-ink-3">Email</label>
