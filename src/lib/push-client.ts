@@ -3,6 +3,18 @@
 // Client-side web-push subscription flow. Registers the service worker, fetches
 // the VAPID public key, subscribes, and persists the subscription server-side.
 
+import { auth } from "@/lib/firebase";
+
+/** Authorization header carrying the current Firebase ID token, if signed in. */
+async function authHeader(): Promise<Record<string, string>> {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -48,7 +60,7 @@ export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
 export async function sendTestPush(payload: { title: string; body: string; url?: string }): Promise<boolean> {
   const res = await fetch("/api/push/send", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
     body: JSON.stringify(payload),
   });
   return res.ok;

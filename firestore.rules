@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Firestore security rules for Argus / opportunity-radar.
+//
+// All user data lives under users/{uid}. Every visitor gets a Firebase Auth
+// session (anonymous by default — see src/lib/firebase.ts), so `request.auth`
+// is present for both anonymous and upgraded/real accounts. Access is scoped
+// strictly to the owning uid: a signed-in user can only ever read or write
+// their own document tree, never anyone else's.
+//
+// Deploy with:  firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Profile document (interests, skills, resume-derived fields, email, etc.)
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Per-user private sub-documents synced from the client Zustand stores
+      // (collections = saved/applied, prefs = notification settings/read state).
+      match /private/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // Any other future per-user sub-collections inherit the same ownership rule.
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Default deny: nothing else in the database is client-accessible.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

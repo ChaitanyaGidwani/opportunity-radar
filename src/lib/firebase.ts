@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, GithubAuthProvider, OAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, GithubAuthProvider, OAuthProvider, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -32,3 +32,19 @@ export const linkedinProvider = new OAuthProvider("oidc.linkedin");
 linkedinProvider.addScope("openid");
 linkedinProvider.addScope("profile");
 linkedinProvider.addScope("email");
+
+// Give every visitor a Firebase Auth session — anonymous by default — so
+// their data (profile, saved items, prefs) can sync to Firestore under a uid
+// from the moment they land, not just after they create a real account.
+// AuthGuard treats `user.isAnonymous` as "signed out" for gated screens, and
+// signing up/in later upgrades this same uid in place (see auth-guard.tsx),
+// so nothing collected anonymously is lost.
+if (typeof window !== "undefined") {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      signInAnonymously(auth).catch((err) => {
+        console.error("Anonymous sign-in failed", err);
+      });
+    }
+  });
+}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateJSON } from "@/lib/ai/groq";
+import { aiRateLimit } from "@/lib/server/ai-guard";
 import { resumeAnalysisPrompt } from "@/lib/ai/prompts";
 import { peekCorpus } from "@/lib/store";
 import { seedAdapter } from "@/lib/sources/seed";
@@ -9,7 +10,13 @@ export const dynamic = "force-dynamic";
 // Backoff retry on rate limit can add a few seconds — give it headroom.
 export const maxDuration = 30;
 
+// Reject oversized uploads before parsing — PDF parsers are a classic DoS/
+// malformed-file target, and real resumes are small.
+const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export async function POST(req: Request) {
+  const limited = aiRateLimit(req);
+  if (limited) return limited;
   try {
     const formData = await req.formData();
     const file = formData.get("resume") as File | null;
@@ -17,6 +24,10 @@ export async function POST(req: Request) {
 
     if (!file) {
       return NextResponse.json({ error: "Resume file required" }, { status: 400 });
+    }
+
+    if (file.size > MAX_RESUME_BYTES) {
+      return NextResponse.json({ error: "Resume is too large (max 5 MB)." }, { status: 413 });
     }
 
     // Extract text from file

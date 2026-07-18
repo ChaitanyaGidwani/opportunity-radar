@@ -108,10 +108,14 @@ export function NotificationsClient() {
       const userEmail = auth.currentUser?.email;
       if (userEmail) {
         try {
+          const token = await auth.currentUser?.getIdToken();
           const res = await fetch("/api/test-nudge", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({}),
           });
           if (res.ok) {
             successCount++;

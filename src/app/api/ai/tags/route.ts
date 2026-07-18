@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateJSON } from "@/lib/ai/groq";
+import { aiRateLimit } from "@/lib/server/ai-guard";
 import { smartTagsPrompt } from "@/lib/ai/prompts";
 import { getCachedAI, setCachedAI, contentHash } from "@/lib/ai/cache";
 import { getCorpus } from "@/lib/corpus";
@@ -8,6 +9,8 @@ import type { AISmartTags } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = aiRateLimit(req);
+  if (limited) return limited;
   try {
     const { opportunityId } = await req.json();
     if (!opportunityId) {

@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { NudgeChannel } from "@/lib/types";
+import { bindStoreToFirestore } from "@/lib/firestore-sync";
 
 export interface NudgePrefs {
   channels: Record<"in-app" | "push" | "email", boolean>;
@@ -68,3 +69,39 @@ export const usePrefs = create<PrefsState>()(
     },
   ),
 );
+
+// Sync notification prefs / read state to Firestore for every signed-in uid
+// (anonymous visitors included).
+if (typeof window !== "undefined") {
+  bindStoreToFirestore(
+    usePrefs,
+    "prefs",
+    (s) => ({
+      channels: s.channels,
+      primaryChannel: s.primaryChannel,
+      quietStart: s.quietStart,
+      quietEnd: s.quietEnd,
+      frequencyCap: s.frequencyCap,
+      weeklyDigest: s.weeklyDigest,
+      readIds: s.readIds.slice(0, 200),
+      snoozed: s.snoozed,
+      mutedOpportunities: s.mutedOpportunities,
+    }),
+    (local, remote) => ({
+      channels: { ...local.channels, ...(remote.channels as PrefsState["channels"] | undefined) },
+      primaryChannel: (remote.primaryChannel as PrefsState["primaryChannel"] | undefined) ?? local.primaryChannel,
+      quietStart: typeof remote.quietStart === "number" ? remote.quietStart : local.quietStart,
+      quietEnd: typeof remote.quietEnd === "number" ? remote.quietEnd : local.quietEnd,
+      frequencyCap: typeof remote.frequencyCap === "number" ? remote.frequencyCap : local.frequencyCap,
+      weeklyDigest: typeof remote.weeklyDigest === "boolean" ? remote.weeklyDigest : local.weeklyDigest,
+      readIds: [...new Set([...(Array.isArray(remote.readIds) ? (remote.readIds as string[]) : []), ...local.readIds])],
+      snoozed: { ...local.snoozed, ...(remote.snoozed as PrefsState["snoozed"] | undefined) },
+      mutedOpportunities: [
+        ...new Set([
+          ...(Array.isArray(remote.mutedOpportunities) ? (remote.mutedOpportunities as string[]) : []),
+          ...local.mutedOpportunities,
+        ]),
+      ],
+    }),
+  );
+}

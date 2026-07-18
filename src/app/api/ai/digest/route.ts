@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateJSON } from "@/lib/ai/groq";
+import { aiRateLimit } from "@/lib/server/ai-guard";
 import { weeklyDigestPrompt } from "@/lib/ai/prompts";
 import { getCorpus } from "@/lib/corpus";
 import { rank } from "@/lib/rank";
@@ -8,6 +9,8 @@ import type { Profile, WeeklyDigest } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = aiRateLimit(req);
+  if (limited) return limited;
   try {
     const { profile } = (await req.json()) as { profile: Profile };
     if (!profile) {

@@ -53,6 +53,22 @@ export function makeId(source: string, url: string): string {
 }
 
 /**
+ * Only allow http(s) absolute URLs from third-party sources. Scraped/API data
+ * is untrusted — a `javascript:`/`data:` value would otherwise become a live
+ * clickable link (or image src) rendered in the app. Returns a clean URL or
+ * undefined.
+ */
+export function safeExternalUrl(url: string | undefined | null): string | undefined {
+  if (!url || typeof url !== "string") return undefined;
+  try {
+    const u = new URL(url.trim());
+    return u.protocol === "http:" || u.protocol === "https:" ? u.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Construct a fully-formed Opportunity, filling the bookkeeping fields and
  * normalising arrays so adapters only supply the meaningful bits.
  */
@@ -66,6 +82,11 @@ export function buildOpportunity(
   const sourceUrl = partial.sourceUrl;
   return {
     ...partial,
+    // Scrub untrusted third-party URLs down to safe http(s) values so they can
+    // never render as a javascript:/data: link or image source in the UI.
+    sourceUrl: safeExternalUrl(sourceUrl) ?? "",
+    imageUrl: safeExternalUrl(partial.imageUrl),
+    logoUrl: safeExternalUrl(partial.logoUrl),
     id: makeId(source, sourceUrl),
     source,
     sourceLabel,

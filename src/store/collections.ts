@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { bindStoreToFirestore } from "@/lib/firestore-sync";
 
 interface CollectionsState {
   saved: string[];
@@ -39,3 +40,17 @@ export const useCollections = create<CollectionsState>()(
     },
   ),
 );
+
+// Sync saved/applied opportunities to Firestore for every signed-in uid
+// (anonymous visitors included) so this data isn't stranded in one browser.
+if (typeof window !== "undefined") {
+  bindStoreToFirestore(
+    useCollections,
+    "collections",
+    (s) => ({ saved: s.saved, applied: s.applied }),
+    (local, remote) => ({
+      saved: [...new Set([...(Array.isArray(remote.saved) ? (remote.saved as string[]) : []), ...local.saved])],
+      applied: [...new Set([...(Array.isArray(remote.applied) ? (remote.applied as string[]) : []), ...local.applied])],
+    }),
+  );
+}

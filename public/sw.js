@@ -29,9 +29,21 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+// Only ever navigate to our own origin — a notification payload must never be
+// able to send a click to an arbitrary external site (phishing defense).
+function safeUrl(raw) {
+  try {
+    const u = new URL(raw, self.location.origin);
+    if (u.origin === self.location.origin) return u.pathname + u.search + u.hash;
+  } catch {
+    /* fall through */
+  }
+  return "/notifications";
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/notifications";
+  const url = safeUrl((event.notification.data && event.notification.data.url) || "/notifications");
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
