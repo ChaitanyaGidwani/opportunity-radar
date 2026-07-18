@@ -1,12 +1,42 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { verifyRequest } from "@/lib/server/auth";
+import { rateLimit } from "@/lib/server/rate-limit";
+import { isSameOrigin } from "@/lib/server/http";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Send a test email digest. Locked down so it can't be used as an open relay
+ * to spam arbitrary inboxes on your Resend quota:
+ *   - must be same-origin
+ *   - caller must present a valid Firebase ID token
+ *   - the email is ALWAYS the caller's own verified token email — any
+ *     client-supplied address is ignored
+ *   - rate limited per user
+ */
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    if (!isSameOrigin(req)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
+    const user = await verifyRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const email = user.email;
     if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      return NextResponse.json({ error: "Your account has no email address to send to." }, { status: 400 });
+    }
+
+    const rl = rateLimit(`test-nudge:${user.uid}`, 3, 60 * 60_000); // 3/hour
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Too many test emails. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+      );
     }
 
     if (!process.env.RESEND_API_KEY) {

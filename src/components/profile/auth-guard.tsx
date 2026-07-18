@@ -2,9 +2,52 @@
 
 import { useEffect, useState, useRef } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signInWithPopup, type AuthProvider } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithPopup,
+  signInWithCredential,
+  linkWithPopup,
+  linkWithCredential,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  OAuthProvider,
+  type AuthProvider,
+  type AuthError,
+} from "firebase/auth";
 import { auth, googleProvider, githubProvider, linkedinProvider } from "@/lib/firebase";
 import { Button } from "../ui/button";
+
+// Static credentialFromError lives on each provider class — pick the right
+// one so we can recover the credential when linking an anonymous session
+// collides with an account that already exists.
+const credentialFromError = (err: AuthError, providerName: string) => {
+  if (providerName === "google") return GoogleAuthProvider.credentialFromError(err);
+  if (providerName === "github") return GithubAuthProvider.credentialFromError(err);
+  return OAuthProvider.credentialFromError(err); // linkedin (generic OIDC provider)
+};
+
+/**
+ * Verify the reCAPTCHA token server-side before allowing an auth action. The
+ * client-side "is the token non-empty" check is only UX; this closes the loop
+ * so the token is actually validated against Google. Returns true to proceed.
+ * (The server no-ops when RECAPTCHA_SECRET_KEY isn't configured.)
+ */
+async function verifyCaptcha(token: string | null): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/verify-captcha", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json().catch(() => ({ ok: false }));
+    return Boolean(data.ok);
+  } catch {
+    return false;
+  }
+}
 
 const getAuthErrorMessage = (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
   switch (err.code) {
@@ -33,6 +76,8 @@ const getAuthErrorMessage = (err: any /* eslint-disable-line @typescript-eslint/
       return "";
     case "auth/operation-not-allowed":
       return "This sign-in method is not enabled. Please contact support.";
+    case "auth/credential-already-in-use":
+      return "This account is already linked to another user.";
     default:
       return err.message || "An unexpected error occurred. Please try again.";
   }
@@ -73,8 +118,22 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setError("");
     setIsSubmitting(true);
     try {
+      if (process.env.NODE_ENV !== "development" && !(await verifyCaptcha(captchaToken))) {
+        setError("Captcha verification failed. Please try again.");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+        return;
+      }
       if (isLogin) {
+        // Switching into an existing account discards this anonymous
+        // session's uid, but the local Zustand stores stay in memory, so the
+        // Firestore sync (profile/collections/prefs) merges this session's
+        // data into the account being signed into.
         await signInWithEmailAndPassword(auth, email, password);
+      } else if (auth.currentUser?.isAnonymous) {
+        // Upgrade the anonymous session in place — same uid, so everything
+        // already synced to Firestore under it carries over automatically.
+        await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, password));
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
@@ -91,7 +150,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setError("");
     setSocialProvider(name);
     try {
-      await signInWithPopup(auth, provider);
+      if (auth.currentUser?.isAnonymous) {
+        try {
+          // Upgrade the anonymous session in place — same uid.
+          await linkWithPopup(auth.currentUser, provider);
+        } catch (linkErr: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+          if (linkErr.code === "auth/credential-already-in-use") {
+            // That social account is already tied to a different existing
+            // user — sign into it instead. The local stores are still in
+            // memory, so this session's data merges in via Firestore sync.
+            const credential = credentialFromError(linkErr, name);
+            if (!credential) throw linkErr;
+            await signInWithCredential(auth, credential);
+          } else {
+            throw linkErr;
+          }
+        }
+      } else {
+        await signInWithPopup(auth, provider);
+      }
       // onAuthStateChanged handles the rest — new users are auto-created.
     } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       const msg = getAuthErrorMessage(err);
@@ -114,6 +191,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setError("");
     setIsSubmitting(true);
     try {
+      if (process.env.NODE_ENV !== "development" && !(await verifyCaptcha(captchaToken))) {
+        setError("Captcha verification failed. Please try again.");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+        return;
+      }
       await sendPasswordResetEmail(auth, email);
       setResetSent(true);
     } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
@@ -133,7 +216,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (user) {
+  // Anonymous sessions (auto-created for every visitor, see lib/firebase.ts)
+  // still need to go through sign-up/sign-in to reach gated screens.
+  if (user && !user.isAnonymous) {
     return <>{children}</>;
   }
 

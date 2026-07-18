@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateJSON } from "@/lib/ai/groq";
+import { aiRateLimit } from "@/lib/server/ai-guard";
 import { comparisonPrompt } from "@/lib/ai/prompts";
 import { getCorpus } from "@/lib/corpus";
 import type { Profile, ComparisonResult } from "@/lib/types";
@@ -7,6 +8,8 @@ import type { Profile, ComparisonResult } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = aiRateLimit(req);
+  if (limited) return limited;
   try {
     const { opportunityIds, profile } = (await req.json()) as {
       opportunityIds: string[];
