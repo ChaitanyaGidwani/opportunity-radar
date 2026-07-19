@@ -5,7 +5,7 @@
 Most students juggle a dozen siloed platforms and still miss things — and the costliest failure mode isn't a weak profile, it's a **deadline that slipped by**. Argus is a neutral *aggregation + reminder layer* across every category: it surfaces what's relevant to you and pings you in time. We always deep-link out to the original site to apply — we're never the application endpoint.
 
 ---
-
+Live Link : https://opportunity-radar-theta.vercel.app/feed
 ## What it does
 
 | Pillar | How |
